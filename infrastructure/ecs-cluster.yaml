@@ -1,0 +1,198 @@
+Description: >
+    This template deploys an ECS cluster to the provided VPC and subnets 
+    using an Auto Scaling Group
+
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    InstanceType: 
+        Description: Which instance type should we use to build the ECS cluster?
+        Type: String
+        Default: c4.large
+
+    ClusterSize:
+        Description: How many ECS hosts do you want to initially deploy?
+        Type: Number
+        Default: 4
+
+    VPC:
+        Description: Choose which VPC this ECS cluster should be deployed to
+        Type: AWS::EC2::VPC::Id
+
+    Subnets:
+        Description: Choose which subnets this ECS cluster should be deployed to
+        Type: List<AWS::EC2::Subnet::Id>
+
+    SecurityGroup:
+        Description: Select the Security Group to use for the ECS cluster hosts
+        Type: AWS::EC2::SecurityGroup::Id
+
+Mappings:
+
+    # These are the latest ECS optimized AMIs as of September 2016:
+    #
+    #   amzn-ami-2016.03.h-amazon-ecs-optimized
+    #   ECS agent:    1.12.1
+    #   Docker:       1.11.2 
+    #   ecs-init:     1.12.1-1
+    #
+    # You can find the latest available on this page of our documentation:
+    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
+    # (note the AMI identifier is region specific) 
+
+    AWSRegionToAMI:
+        us-east-1:
+            AMI: ami-6bb2d67c
+        us-west-1:
+            AMI: ami-70632110
+        us-west-2:
+            AMI: ami-2d1bce4d
+        eu-west-1:
+            AMI: ami-078df974
+        eu-central-1:
+            AMI: ami-d3cf3ebc
+        ap-northeast-1:
+            AMI: ami-2b6ba64a
+        ap-southeast-1:
+            AMI: ami-55598036
+        ap-southeast-2:
+            AMI: ami-0e20176d
+
+Resources:
+
+    ECSCluster:
+        Type: AWS::ECS::Cluster
+
+    ECSAutoScalingGroup:
+        Type: AWS::AutoScaling::AutoScalingGroup
+        Properties: 
+            VPCZoneIdentifier: !Ref Subnets
+            LaunchConfigurationName: !Ref ECSLaunchConfiguration
+            MinSize: !Ref ClusterSize
+            MaxSize: !Ref ClusterSize
+            DesiredCapacity: !Ref ClusterSize
+            Tags: 
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} ECS host
+                  PropagateAtLaunch: true
+        CreationPolicy:
+            ResourceSignal: 
+                Timeout: PT15M
+        UpdatePolicy:
+            AutoScalingRollingUpdate:
+                MinInstancesInService: 1
+                MaxBatchSize: 1
+                PauseTime: PT15M
+                WaitOnResourceSignals: true
+        
+    ECSLaunchConfiguration:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        Properties:
+            ImageId:  !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
+            InstanceType: !Ref InstanceType
+            SecurityGroups: 
+                - !Ref SecurityGroup
+            IamInstanceProfile: !Ref ECSInstanceProfile
+            UserData: 
+                "Fn::Base64": !Sub |
+                    #!/bin/bash
+                    yum install -y aws-cfn-bootstrap
+                    /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
+                    /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
+
+        Metadata:
+            AWS::CloudFormation::Init:
+                config:
+                    commands:
+                        01_add_instance_to_cluster:
+                            command: !Sub echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+                    files:
+                        "/etc/cfn/cfn-hup.conf":
+                            mode: 000400
+                            owner: root
+                            group: root
+                            content: !Sub |
+                                [main]
+                                stack=${AWS::StackId}
+                                region=${AWS::Region}
+                        
+                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
+                            content: !Sub |
+                                [cfn-auto-reloader-hook]
+                                triggers=post.update
+                                path=Resources.ContainerInstances.Metadata.AWS::CloudFormation::Init
+                                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
+
+                    services: 
+                        sysvinit:
+                            cfn-hup: 
+                                enabled: true
+                                ensureRunning: true
+                                files: 
+                                    - /etc/cfn/cfn-hup.conf
+                                    - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+
+    # This IAM Role is attached to all of the ECS hosts. It is based on the default role
+    # published here:
+    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
+    #
+    # You can add other IAM policy statements here to allow access from your ECS hosts
+    # to other AWS services. Please note that this role will be used by ALL containers
+    # running on the ECS host.
+
+    ECSRole:
+        Type: AWS::IAM::Role
+        Properties: 
+            Path: /
+            RoleName: !Sub ${EnvironmentName}-ECSRole-${AWS::Region}
+            AssumeRolePolicyDocument: |
+                {
+                    "Statement": [{
+                        "Action": "sts:AssumeRole",
+                        "Effect": "Allow",
+                        "Principal": { 
+                            "Service": "ec2.amazonaws.com" 
+                        }
+                    }]
+                }
+            Policies: 
+                - PolicyName: ecs-service
+                  PolicyDocument: |
+                    {
+                        "Statement": [{
+                            "Effect": "Allow",
+                            "Action": [
+                                "ecs:CreateCluster",
+                                "ecs:DeregisterContainerInstance",
+                                "ecs:DiscoverPollEndpoint",
+                                "ecs:Poll",
+                                "ecs:RegisterContainerInstance",
+                                "ecs:StartTelemetrySession",
+                                "ecs:Submit*",
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents",
+                                "ecr:BatchCheckLayerAvailability",
+                                "ecr:BatchGetImage",
+                                "ecr:GetDownloadUrlForLayer",
+                                "ecr:GetAuthorizationToken"
+                            ],
+                            "Resource": "*"
+                        }]
+                    }
+
+    ECSInstanceProfile: 
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            Path: /
+            Roles: 
+                - !Ref ECSRole
+
+Outputs:
+
+    Cluster:
+        Description: A reference to the ECS cluster
+        Value: !Ref ECSCluster
+
