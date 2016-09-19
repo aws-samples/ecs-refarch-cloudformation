@@ -65,6 +65,8 @@ Resources:
 
     ECSCluster:
         Type: AWS::ECS::Cluster
+        Properties:
+            ClusterName: !Ref ${EnvironmentName}
 
     ECSAutoScalingGroup:
         Type: AWS::AutoScaling::AutoScalingGroup
