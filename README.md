@@ -1,8 +1,7 @@
 # Deploying Microservices with Amazon ECS and AWS CloudFormation (with a sprinkle of ALB too)
 
-This set of YAML [AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates provides an reference architecture for deploying microservices to [Amazon EC2 Container Service (Amazon ECS)](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) with [AWS CloudFormation](https://aws.amazon.com/cloudformation/).
-
-You can use this button to launch this [AWS CloudFormation](https://aws.amazon.com/cloudformation/) stack into your account:
+This reference architecture provides a set of YAML templates for deploying microservices to [Amazon EC2 Container Service (Amazon ECS)](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) with [AWS CloudFormation](https://aws.amazon.com/cloudformation/).
+You can launch this [AWS CloudFormation](https://aws.amazon.com/cloudformation/) stack in the US East (N. Virginia) Region in your account:
 
 [![cloudformation-launch-stack](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://amazonecs-reference-architectures.s3-us-east-1.amazonaws.com/cloudformation/master.yaml)  
 
@@ -20,61 +19,9 @@ The repository consists of a set of nested templates that will deploy:
  - ALB path based routes for each Amazon ECS service to route the inbound traffic to the correct Amazon ECS service.
  - Centralised container logging with [Amazon CloudWatch Logs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html).
 
-## Amazon EC2 Container Service (Amazon ECS)
-
-Amazon EC2 Container Service (ECS) is a highly scalable, high performance container management service that supports Docker containers and allows you to easily run applications on a managed cluster of Amazon EC2 instances. Amazon ECS eliminates the need for you to install, operate, and scale your own cluster management infrastructure. With simple API calls, you can launch and stop Docker-enabled applications, query the complete state of your cluster, and access many familiar features like security groups, Elastic Load Balancing, EBS volumes, and IAM roles. You can use Amazon ECS to schedule the placement of containers across your cluster based on your resource needs and availability requirements. You can also integrate your own scheduler or third-party schedulers to meet business or application specific requirements.
-
-Here are some of the key benefits of using Amazon ECS...
-
-#### Fully Managed
-
-Amazon ECS is a **managed** container management engine. Rather than run a container management engine / scheduler yourself, with Amazon ECS you can leave undifferentiated heavy lifting to AWS while you focus on things that differentiate your business and add value.
-
-#### Open Source Agent
-
-The container agent runs on each instance within an Amazon ECS cluster. Typically, it runs as a container itself and registers the hosts with Amazon ECS. It sends information about the instance's current running tasks and resource utilization to Amazon ECS, and starts and stops tasks whenever it receives a request from Amazon ECS. For more information, see [Amazon ECS Container Agent](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_agent.html).
-
-For simplicity, we recommend that you use one of the [pre-configured and optimised AMIs](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html) that can be launched into Amazon EC2 (as this set of templates does), but you always have the option to [manually deploy the agent](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-agent-install.html) if you wish. 
-
-The source code for the Amazon ECS container agent is available on GitHub. We encourage you to submit pull requests for changes that you would like to have included.
-
-You can find the project on GitHub here: 
-[https://github.com/aws/amazon-ecs-agent](https://github.com/aws/amazon-ecs-agent) 
- 
-#### Extensible 
-
-Amazon ECS provides a default container scheduler that can deploy short running tasks (e.g. a one-off job), or long running services (e.g. a web service).
-
-If you require something more tailored to your needs, check out this blog post that shows how you can create your own custom schedulers for Amazon ECS:
-[https://aws.amazon.com/blogs/compute/how-to-create-a-custom-scheduler-for-amazon-ecs/](https://aws.amazon.com/blogs/compute/how-to-create-a-custom-scheduler-for-amazon-ecs/)
-
-We also have an example implementation of a custom scheduler that integrates Apache Mesos with Amazon ECS:
-[https://github.com/awslabs/ecs-mesos-scheduler-driver](https://github.com/awslabs/ecs-mesos-scheduler-driver)
- 
-#### Strong integration with AWS services
-
- - Integrate identity and access management with [AWS IAM](http://docs.aws.amazon.com/IAM/latest/UserGuide/getting-setup.html) to control who/what can interact and manage your cluster.
- - Create granular [IAM Roles](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/IAM_policies.html) to allow secure access from your containers/tasks/services to other AWS services.
- - Audit logging with [AWS CloudTrail](https://aws.amazon.com/cloudtrail/).
- - Centralised container logging with [AWS CloudWatch Logs](https://aws.amazon.com/cloudwatch/).
- - Per cluster or per task/service metrics and monitoring with [AWS CloudWatch](https://aws.amazon.com/cloudwatch/).
- - Integration with Auto Scaling Groups to create a scalable pool of compute for your Amazon ECS cluster. 
- - ... and much more! 
-
-#### Further reading
-
-This YouTube video provides a great insight into getting started with Amazon ECS:
-
-[![youtube-video](https://img.youtube.com/vi/eun8CqGqdk8/0.jpg)](https://www.youtube.com/watch?v=eun8CqGqdk8)
-
-You can also learn how [Coursera](https://www.coursera.org/) moved to a microservices-based architecture with Amazon ECS: 
-
-[https://aws.amazon.com/solutions/case-studies/coursera-ecs/](https://aws.amazon.com/solutions/case-studies/coursera-ecs/)
-
-
 ## Why use AWS CloudFormation with Amazon ECS?
 
-Using AWS CloudFormation to deploy and manage services with Amazon ECS has a number of nice benefits over more traditional methods (cli, scripting etc). For example:
+Using AWS CloudFormation to deploy and manage services with Amazon ECS has a number of nice benefits over more traditional methods (cli, scripting etc). 
 
 #### Infrastructure-as-Code
 
@@ -96,7 +43,7 @@ The templates below are included in this repository and reference architecture:
 
 | Template | Description |
 | --- | --- | 
-| [master.yaml](master.yaml) | This is the master template - deploy to to CloudFormation and it will include all of the others automatically. |
+| [master.yaml](master.yaml) | This is the master template - deploy to CloudFormation and it will include all of the others automatically. |
 | [infrastructure/vpc.yaml](infrastructure/vpc.yaml) | This template deploys a [VPC](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Introduction.html) with a pair of public and private subnets spread across two [Availability Zones (AZs)](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html). It deploys an [Internet Gateway](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Internet_Gateway.html), with a default route on the public subnets. It deploys a pair of [NAT Gateways](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-nat-gateway.html) (one in each AZ), and default routes for them in the private subnets. |
 | [infrastructure/security-groups.yaml](infrastructure/security-groups.yaml) | This template contains the [security groups](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_SecurityGroups.html) required by our entire stack. We create them in a separate nested template, so they can be referenced by all of the other nested templates. |
 | [infrastructure/load-balancers.yaml](infrastructure/load-balancers.yaml) | This template deploys an [Application Load Balancer (ALB)](https://aws.amazon.com/elasticloadbalancing/applicationloadbalancer/) to the public subnets that exposes our various Amazon ECS services. We create it in a separate nested template, so it can be referenced by all of the other nested templates and our various Amazon ECS services can register with it. |
@@ -112,17 +59,17 @@ Once the CloudFormation templates have been deployed, the [stack outputs](http:/
 
 ### Get started and deploy this into my AWS account
 
-You can use this button to launch this [AWS CloudFormation](https://aws.amazon.com/cloudformation/) stack into your account:
+You can launch this [AWS CloudFormation](https://aws.amazon.com/cloudformation/) stack in the US East (N. Virginia) Region in your account:
 
 [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://amazonecs-reference-architectures.s3-us-east-1.amazonaws.com/cloudformation/master.yaml)    
 
 ### Customise the templates
 
-1. Fork this GitHub repository ([direct link](https://github.com/awslabs/ecs-refarch-cloudformation#fork-destination-box))
+1. [Fork](https://github.com/awslabs/ecs-refarch-cloudformation#fork-destination-box) this GitHub repository
 2. Clone the forked GitHub repository to your local machine
 3. Modify the templates
 4. Upload them to an Amazon S3 bucket of your choice
-5. Either create a new AWS CloudFormation stack by deploying emaster.yaml template, or update your existing stack with your version of the templates.
+5. Either create a new AWS CloudFormation stack by deploying the master.yaml template, or update your existing stack with your version of the templates.
 
 ### Create a new Amazon ECS service
 
