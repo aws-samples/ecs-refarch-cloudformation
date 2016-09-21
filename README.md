@@ -1,6 +1,7 @@
 # Deploying Microservices with Amazon ECS and AWS CloudFormation (with a sprinkle of ALB too)
 
 This reference architecture provides a set of YAML templates for deploying microservices to [Amazon EC2 Container Service (Amazon ECS)](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) with [AWS CloudFormation](https://aws.amazon.com/cloudformation/).
+
 You can launch this [AWS CloudFormation](https://aws.amazon.com/cloudformation/) stack in the US East (N. Virginia) Region in your account:
 
 [![cloudformation-launch-stack](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://amazonecs-reference-architectures.s3-us-east-1.amazonaws.com/cloudformation/master.yaml)  
