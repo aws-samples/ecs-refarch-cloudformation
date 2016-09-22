@@ -57,7 +57,7 @@ Resources:
     ProductService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/product-service.yaml
+            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/product-service/service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
@@ -68,7 +68,7 @@ Resources:
     WebsiteService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/website-service.yaml
+            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/website-service/service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster

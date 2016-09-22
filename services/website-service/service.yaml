@@ -2,9 +2,6 @@ Description: >
     This is an example of a long running ECS service that needs to connect to another ECS service (product-service)
     via it's load balancer. We use environment variables to pass the URL of the product-service to this one's container(s).
 
-    You can find the full source for this service here:
-    https://github.com/paulmaddox/ecs-demo-website-service
-
 Parameters: 
 
     VPC:
@@ -53,7 +50,7 @@ Resources:
             ContainerDefinitions:
                 - Name: website-service
                   Essential: true
-                  Image: maddox/website-service:1.0.0
+                  Image: 275396840892.dkr.ecr.us-east-1.amazonaws.com/ecs-refarch-cloudformation/website-service:1.0.0
                   Memory: 128
                   Environment: 
                     - Name: PRODUCT_SERVICE_URL

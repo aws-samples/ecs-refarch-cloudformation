@@ -1,8 +1,5 @@
 Description: >
     This is an example of a long running ECS service that serves a JSON API of products.
-    
-    You can find the full source for the service here:
-    https://github.com/paulmaddox/ecs-demo-product-service
 
 Parameters: 
 
@@ -48,7 +45,7 @@ Resources:
             ContainerDefinitions:
                 - Name: product-service
                   Essential: true
-                  Image: maddox/product-service:1.0.1
+                  Image: 275396840892.dkr.ecr.us-east-1.amazonaws.com/ecs-refarch-cloudformation/product-service:1.0.0
                   Memory: 128
                   PortMappings:
                     - ContainerPort: 8001
