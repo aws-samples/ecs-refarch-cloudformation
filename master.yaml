@@ -10,19 +10,12 @@ Description: >
     Last Modified: 19th September 2016
     Author: Paul Maddox <pmaddox@amazon.com>
 
-Parameters:
-
-    TemplateLocation:
-        Type: String
-        Description: The S3 location containing the nested CloudFormation templates for this stack
-        Default: https://<bucket-tbd>.s3-eu-west-1.amazonaws.com/ecs-refarch-cloudformation
-
 Resources:
 
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub ${TemplateLocation}/infrastructure/vpc.yaml
+            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/vpc.yaml
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            10.180.0.0/16
@@ -34,7 +27,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub ${TemplateLocation}/infrastructure/security-groups.yaml
+            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/security-groups.yaml
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -42,7 +35,7 @@ Resources:
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub ${TemplateLocation}/infrastructure/load-balancers.yaml
+            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -52,7 +45,7 @@ Resources:
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub ${TemplateLocation}/infrastructure/ecs-cluster.yaml
+            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/ecs-cluster.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 InstanceType: t2.large
@@ -64,7 +57,7 @@ Resources:
     ProductService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub ${TemplateLocation}/services/product-service.yaml
+            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/product-service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
@@ -75,7 +68,7 @@ Resources:
     WebsiteService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub ${TemplateLocation}/services/website-service.yaml
+            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/website-service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
