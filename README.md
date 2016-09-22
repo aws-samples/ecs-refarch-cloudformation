@@ -102,7 +102,7 @@ By default, [t2.large](https://aws.amazon.com/ec2/instance-types/) instances wil
 ECS:
   Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateLocation}/infrastructure/ecs-cluster.yaml
+      TemplateURL: ...
       Parameters:
         ... 
         InstanceType: t2.large
