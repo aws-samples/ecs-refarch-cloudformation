@@ -47,6 +47,7 @@ Resources:
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
+            Family: website-service
             ContainerDefinitions:
                 - Name: website-service
                   Essential: true

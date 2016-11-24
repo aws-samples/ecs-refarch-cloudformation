@@ -42,6 +42,7 @@ Resources:
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
+            Family: product-service
             ContainerDefinitions:
                 - Name: product-service
                   Essential: true
