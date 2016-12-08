@@ -34,6 +34,7 @@ Resources:
 
     Service: 
         Type: AWS::ECS::Service
+        DependsOn: ListenerRule
         Properties: 
             Cluster: !Ref Cluster
             Role: !Ref ServiceRole
