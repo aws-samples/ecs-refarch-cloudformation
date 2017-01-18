@@ -30,6 +30,10 @@ Parameters:
         Description: Select the Security Group to use for the ECS cluster hosts
         Type: AWS::EC2::SecurityGroup::Id
 
+    SSHKey:
+        Type: AWS::EC2::KeyPair::KeyName
+        Description: SSH Key for to access to the ECS Hosts
+
 Mappings:
 
     # These are the latest ECS optimized AMIs as of November 2016:
@@ -86,15 +90,13 @@ Resources:
             ResourceSignal: 
                 Timeout: PT15M
         UpdatePolicy:
-            AutoScalingRollingUpdate:
-                MinInstancesInService: 1
-                MaxBatchSize: 1
-                PauseTime: PT15M
-                WaitOnResourceSignals: true
+            AutoScalingReplacingUpdate:
+                WillReplace: true
         
     ECSLaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties:
+            KeyName: !Ref SSHKey
             ImageId:  !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
             InstanceType: !Ref InstanceType
             SecurityGroups: 
@@ -103,41 +105,9 @@ Resources:
             UserData: 
                 "Fn::Base64": !Sub |
                     #!/bin/bash
+                    echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
                     yum install -y aws-cfn-bootstrap
-                    /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
-                    /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
-
-        Metadata:
-            AWS::CloudFormation::Init:
-                config:
-                    commands:
-                        01_add_instance_to_cluster:
-                            command: !Sub echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-                    files:
-                        "/etc/cfn/cfn-hup.conf":
-                            mode: 000400
-                            owner: root
-                            group: root
-                            content: !Sub |
-                                [main]
-                                stack=${AWS::StackId}
-                                region=${AWS::Region}
-                        
-                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
-                            content: !Sub |
-                                [cfn-auto-reloader-hook]
-                                triggers=post.update
-                                path=Resources.ContainerInstances.Metadata.AWS::CloudFormation::Init
-                                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
-
-                    services: 
-                        sysvinit:
-                            cfn-hup: 
-                                enabled: true
-                                ensureRunning: true
-                                files: 
-                                    - /etc/cfn/cfn-hup.conf
-                                    - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+                    /opt/aws/bin/cfn-signal -s true --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
 
     # This IAM Role is attached to all of the ECS hosts. It is based on the default role
     # published here:

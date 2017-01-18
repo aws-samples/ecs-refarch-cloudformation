@@ -1,0 +1,54 @@
+Description: >
+    This template deploys a Bastion host to the provided VPC.
+
+Parameters:
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    InstanceType:
+        Description: Which instance type should we use to build the Bastion Host?
+        Type: String
+        Default: t2.micro
+
+    VPC:
+        Description: Choose which VPC this Bastion Host should be deployed to
+        Type: AWS::EC2::VPC::Id
+
+    Subnets:
+        Description: Choose which subnets this Bastion host should should be deployed to
+        Type: List<AWS::EC2::Subnet::Id>
+
+    SecurityGroup:
+        Description: Select the Security Group to use for the Bastion host
+        Type: AWS::EC2::SecurityGroup::Id
+
+    SSHKey:
+        Type: AWS::EC2::KeyPair::KeyName
+        Description: SSH Key for to access to the Bastion Host
+
+Mappings:
+    AWSRegionToAMI:
+        ap-southeast-1:
+            AMI:  "ami-7243e611"
+        ap-southeast-2:
+            AMI:  "ami-55d4e436"
+        us-west-2:
+            AMI: "ami-b04e92d0"
+
+Resources:
+    BastionHost:
+        Type: "AWS::EC2::Instance"
+        Properties:
+            ImageId: !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
+            InstanceType: !Ref InstanceType
+            KeyName: !Ref SSHKey
+            SecurityGroupIds:
+              - !Ref SecurityGroup
+            SubnetId: !Select [ 0, !Ref Subnets]
+            Tags:
+              - Key: Name
+                Value: !Sub ${EnvironmentName} Bastion Host
+
+
+

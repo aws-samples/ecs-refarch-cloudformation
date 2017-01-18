@@ -11,15 +11,37 @@ Description: >
     Finally, it deploys a pair of example ECS services from containers published in 
     Amazon EC2 Container Registry (Amazon ECR).
 
-    Last Modified: 22nd September 2016
+    Last Modified: 11th January 2017
     Author: Paul Maddox <pmaddox@amazon.com>
 
+Parameters:
+    SSHKey:
+        Type: AWS::EC2::KeyPair::KeyName
+        Description: Provide an SSH KeyName to allow SSH access to the instances via a Bastion Host
+    SSHCidr:
+        Type: String
+        Description: Provide a valid CIDR to indicate who can SSH to the Bastion Host
+        Default: 0.0.0.0/0
+        AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+
+Metadata:
+    AWS::CloudFormation::Interface:
+        ParameterGroups:
+          - Label: Bastion Host SSH Access
+            Parameters:
+              - SSHKey
+              - SSHCidr
+        ParameterLabels:
+            SSHKey:
+                default: SSH KeyPair KeyName
+            SSHCidr:
+                default: SSH Ingress CIDR Location
 Resources:
 
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/vpc.yaml
+            TemplateURL: https://s3-ap-southeast-2.amazonaws.com/awssupport-taylorb-public/templates/ecs-refarch-cloudformation/infrastructure/vpc.yaml
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            10.180.0.0/16
@@ -31,25 +53,38 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/security-groups.yaml
+            TemplateURL: https://s3-ap-southeast-2.amazonaws.com/awssupport-taylorb-public/templates/ecs-refarch-cloudformation/infrastructure/security-groups.yaml
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
+                BastionCidr: !Ref SSHCidr
 
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/load-balancers.yaml
+            TemplateURL: https://s3-ap-southeast-2.amazonaws.com/awssupport-taylorb-public/templates/ecs-refarch-cloudformation/infrastructure/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
 
+    Bastion:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3-ap-southeast-2.amazonaws.com/awssupport-taylorb-public/templates/ecs-refarch-cloudformation/infrastructure/bastion.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                InstanceType: t2.micro
+                VPC: !GetAtt VPC.Outputs.VPC
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.BastionHostSecurityGroup
+                Subnets: !GetAtt VPC.Outputs.PublicSubnets
+                SSHKey: !Ref SSHKey
+
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/ecs-cluster.yaml
+            TemplateURL: https://s3-ap-southeast-2.amazonaws.com/awssupport-taylorb-public/templates/ecs-refarch-cloudformation/infrastructure/ecs-cluster.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 InstanceType: t2.large
@@ -57,11 +92,12 @@ Resources:
                 VPC: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                SSHKey: !Ref SSHKey
 
     ProductService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/product-service/service.yaml
+            TemplateURL: https://s3-ap-southeast-2.amazonaws.com/awssupport-taylorb-public/templates/ecs-refarch-cloudformation/services/product-service/service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
@@ -72,7 +108,7 @@ Resources:
     WebsiteService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/website-service/service.yaml
+            TemplateURL: https://s3-ap-southeast-2.amazonaws.com/awssupport-taylorb-public	emplates/ecs-refarch-cloudformation/services/website-service/service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
