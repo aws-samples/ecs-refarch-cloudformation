@@ -56,6 +56,9 @@ Resources:
                     Options:
                         awslogs-group: !Ref AWS::StackName
                         awslogs-region: !Ref AWS::Region
+                  MountPoints:
+                    - ContainerPath: /testvol
+                      SourceVolume: TestVol
             Volumes:
               - Name: TestVol
     
