@@ -137,15 +137,13 @@ Resources:
                     #    partition: none
                     #mounts:
                     #  - [ LABEL=volumes, /var/lib/docker/volumes, auto, defaults]
-                    #### Have to do this in runcmd because fs_setup is not supported
+                    #### Have to do this in bootcmd because fs_setup is not supported
                     #### yet in Amazon Linux
-                    runcmd:
-                      - mkfs.ext4 -L volumes /dev/xvdf
-                      - echo "LABEL=volumes /var/lib/docker/volumes ext4 defaults 0 2" >> /etc/fstab
-                      - mkdir -p /var/lib/docker/volumes
-                      - service docker stop
-                      - mount /var/lib/docker/volumes
-                      - service docker start
+                    bootcmd:
+                      - cloud-init-per once mkfs mkfs.ext4 -L volumes /dev/xvdf
+                      - cloud-init-per once fstab echo "LABEL=volumes /var/lib/docker/volumes ext4 defaults 0 2" >> /etc/fstab
+                      - cloud-init-per once dir mkdir -p /var/lib/docker/volumes
+                      - cloud-init-per once mount mount /var/lib/docker/volumes
 
 
 
