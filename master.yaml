@@ -108,7 +108,7 @@ Resources:
     WebsiteService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-ap-southeast-2.amazonaws.com/awssupport-taylorb-public	emplates/ecs-refarch-cloudformation/services/website-service/service.yaml
+            TemplateURL: https://s3-ap-southeast-2.amazonaws.com/awssupport-taylorb-public/templates/ecs-refarch-cloudformation/services/website-service/service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
