@@ -128,17 +128,14 @@ Resources:
                     Content-Transfer-Encoding: 7bit
                     Content-Type: text/cloud-config
                     Mime-Version: 1.0
-
-                    disk_setup:
-                        /dev/xvdf:
-                            table_type: gpt
-                            layout: true
+                     
                     fs_setup:
-                      - label: docker-volumes
-                        filesystem: xfs
-                        device: /dev/xvdf1
+                      - label: volumes
+                        filesystem: ext4
+                        device: /dev/xvdf
+                        partition: none
                     mounts:
-                      - [/dev/xvdf1, /var/lib/docker/volumes, auto, defaults]
+                      - [ LABEL=volumes, /var/lib/docker/volumes, auto, defaults]
 
 
     # This IAM Role is attached to all of the ECS hosts. It is based on the default role
