@@ -146,7 +146,6 @@ Resources:
                       - service docker stop
                       - mount /var/lib/docker/volumes
                       - service docker start
-                      - start ecs
 
 
 
