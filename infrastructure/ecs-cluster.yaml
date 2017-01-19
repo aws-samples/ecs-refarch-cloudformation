@@ -143,7 +143,10 @@ Resources:
                       - mkfs.ext4 -L volumes /dev/xvdf
                       - echo "LABEL=volumes /var/lib/docker/volumes ext4 defaults 0 2" >> /etc/fstab
                       - mkdir -p /var/lib/docker/volumes
+                      - service docker stop
                       - mount /var/lib/docker/volumes
+                      - service docker start
+                      - start ecs
 
 
 
