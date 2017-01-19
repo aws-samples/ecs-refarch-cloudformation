@@ -102,12 +102,44 @@ Resources:
             SecurityGroups: 
                 - !Ref SecurityGroup
             IamInstanceProfile: !Ref ECSInstanceProfile
+            BlockDeviceMappings:
+                - DeviceName: /dev/xvdf
+                  Ebs:
+                    DeleteOnTermination: True
+                    VolumeSize: 20
+                    VolumeType: gp2
             UserData: 
                 "Fn::Base64": !Sub |
+                    Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
+                    MIME-Version: 1.0
+                    --MIMEBOUNDARY
+                    Content-Disposition: attachment; filename="user_data.sh"
+                    Content-Transfer-Encoding: 7bit
+                    Content-Type: text/x-shellscript
+                    Mime-Version: 1.0
+
                     #!/bin/bash
                     echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
                     yum install -y aws-cfn-bootstrap
                     /opt/aws/bin/cfn-signal -s true --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
+
+                    --MIMEBOUNDARY
+                    Content-Disposition: attachment; filename="cloud_config.yaml"
+                    Content-Transfer-Encoding: 7bit
+                    Content-Type: text/cloud-config
+                    Mime-Version: 1.0
+
+                    disk_setup:
+                        /dev/xvdf:
+                            table_type: gpt
+                            layout: true
+                    fs_setup:
+                      - label: docker-volumes
+                        filesystem: xfs
+                        device: /dev/xvdf1
+                    mounts:
+                      - [/dev/xvdf1, /var/lib/docker/volumes, auto, defaults]
+
 
     # This IAM Role is attached to all of the ECS hosts. It is based on the default role
     # published here:
