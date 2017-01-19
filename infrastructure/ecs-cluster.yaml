@@ -140,9 +140,10 @@ Resources:
                     #### Have to do this in runcmd because fs_setup is not supported
                     #### yet in Amazon Linux
                     runcmd:
-                      - [ mkfs.ext4, -L, volumes, /dev/xvdf]
-                      - [ echo, "LABEL=volumes /var/lib/docker/volumes auto default 0 2", ">>", /etc/fstab]
-                      - [ mount, /var/lib/docker/volumes]
+                      - mkfs.ext4 -L volumes /dev/xvdf
+                      - echo "LABEL=volumes /var/lib/docker/volumes auto default 0 2" >> /etc/fstab
+                      - mkdir -p /var/lib/docker/volumes
+                      - mount /var/lib/docker/volumes
 
 
 
