@@ -56,8 +56,8 @@ Resources:
                     Options:
                         awslogs-group: !Ref AWS::StackName
                         awslogs-region: !Ref AWS::Region
-                  Volumes:
-                    - Name: TestVol
+            Volumes:
+              - Name: TestVol
     
     CloudWatchLogsGroup:
         Type: AWS::Logs::LogGroup
