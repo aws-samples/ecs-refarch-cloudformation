@@ -4,7 +4,7 @@ This reference architecture provides a set of YAML templates for deploying micro
 
 You can launch this CloudFormation stack in the US East (N. Virginia) Region in your account:
 
-[![cloudformation-launch-stack](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/master.yaml)  
+[![cloudformation-launch-stack](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-q#/stacks/new?stackName=Production&templateURL=https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/master.yaml)  
 
 ## Overview
 
@@ -60,9 +60,9 @@ After the CloudFormation templates have been deployed, the [stack outputs](http:
 
 ### Get started and deploy this into my AWS account
 
-You can launch this CloudFormation stack in the US East (N. Virginia) Region in your account:
+Stack is  setup to launch stack in the US West 2(Oregon) Region in your account:
 
-[![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)    
+[![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Assignment 8&templateURL=https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/master.yaml)    
 
 ### Customize the templates
 
