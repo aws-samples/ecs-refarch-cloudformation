@@ -2,9 +2,9 @@
 
 This reference architecture provides a set of YAML templates for deploying microservices to [Amazon EC2 Container Service (Amazon ECS)](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) with [AWS CloudFormation](https://aws.amazon.com/cloudformation/).
 
-You can launch this CloudFormation stack in the US East (N. Virginia) Region in your account:
+You can launch this CloudFormation stack in the US West 2 Region in your account:
 
-[![cloudformation-launch-stack](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-q#/stacks/new?stackName=Production&templateURL=https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/master.yaml)  
+[![cloudformation-launch-stack](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Production&templateURL=https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/infrastructure/master.yaml)  
 
 ## Overview
 
