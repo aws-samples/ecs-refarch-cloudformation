@@ -61,7 +61,7 @@ Resources:
     ProductService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/service.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/product-service/service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
@@ -72,7 +72,7 @@ Resources:
     WebsiteService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/service.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/website-service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
