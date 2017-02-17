@@ -1,5 +1,4 @@
 Description: >
-
     This template deploys a VPC, with a pair of public and private subnets spread
     across two Availabilty Zones. It deploys an Internet Gateway, with a default
     route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),
@@ -11,8 +10,10 @@ Description: >
     Finally, it deploys a pair of example ECS services from containers published in
     Amazon EC2 Container Registry (Amazon ECR).
 
-    Last Modified: 22nd September 2016
-    Author: Paul Maddox <pmaddox@amazon.com>
+    It will eventually deploy the db services
+
+    Last Modified: 17th February 2017
+    Author Dan Carr (ddcarr@gmail.com)
 
 Resources:
 
