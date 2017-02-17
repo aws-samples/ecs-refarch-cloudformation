@@ -4,7 +4,7 @@ This reference architecture provides a set of YAML templates for deploying micro
 
 You can launch this CloudFormation stack in the US West 2 Region in your account:
 
-[![cloudformation-launch-stack](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Production&templateURL=https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/infrastructure/master.yaml)  
+[![cloudformation-launch-stack](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Production&templateURL=https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/master.yaml)  
 
 ## Overview
 
@@ -62,7 +62,7 @@ After the CloudFormation templates have been deployed, the [stack outputs](http:
 
 Stack is  setup to launch stack in the US West 2(Oregon) Region in your account:
 
-[![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Assignment 8&templateURL=https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/master.yaml)    
+[![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Assignment 8&templateURL=https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/master.yaml)    
 
 ### Customize the templates
 
