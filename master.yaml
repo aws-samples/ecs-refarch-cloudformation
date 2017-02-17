@@ -20,7 +20,7 @@ Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/infrastructure/master.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/master.yaml
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            10.180.0.0/16
@@ -32,7 +32,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/infrastructure/security-groups.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/security-groups.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -40,7 +40,7 @@ Resources:
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/infrastructure/load-balancers.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -50,7 +50,7 @@ Resources:
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/infrastructure/ecs-cluster.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/ecs-cluster.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 InstanceType: t2.large
@@ -62,7 +62,7 @@ Resources:
     ProductService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/services/product-service/service.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/services/product-service/service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
@@ -73,7 +73,7 @@ Resources:
     WebsiteService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://raw.githubusercontent.com/pdxdiver/ecs-refarch-cloudformation/master/services/website-service/service.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/services/website-service/service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
