@@ -1,0 +1,148 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation Template for PostgreSQL, template to create a highly-available,
+  RDS DBInstance version 9.3 with alarming on important metrics that indicate the
+  health of the database'
+Parameters:
+  VPC:
+    Type: String
+    Description: VpcId of your existing Virtual Private Cloud(VPC)
+
+  Subnets:
+    Type: CommaDelimitedList
+    Description: The list of SubnetIds,for at least two Availability Zones in the
+      region
+
+  TheDBIdentifier:
+    Type: String
+    Description: The identifier for this postgres database server
+
+  EnvironmentName:
+    Type: String
+    Description: The identifier of this postgres database server
+
+
+  TheDBName:
+    Description: The database name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: must begin with a letter and contain only alphanumeric
+      characters.
+
+  TheDBUser:
+    Description: The database admin account username
+    Type: String
+    MinLength: '1'
+    MaxLength: '20'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric
+      characters.
+
+  TheDBPassword:
+    NoEcho: 'true'
+    Description: The database admin account password
+    Type: String
+    MinLength: '8'
+    MaxLength: '41'
+    ConstraintDescription: must contain only alphanumeric characters.
+
+  TheDBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '1024'
+    ConstraintDescription: must be between 5 and 1024Gb.
+
+  TheDBInstanceClass:
+    Default: db.t2.micro
+    Description: The database instance type
+    Type: String
+    ConstraintDescription: must select a valid database instance type.
+
+  IsMultiAZDatabase:
+    Default: 'false'
+    Description: Create a multi-AZ RDS database instance
+    Type: String
+    AllowedValues:
+    - 'true'
+    - 'false'
+    ConstraintDescription: must be either true or false.
+
+Resources:
+
+  TheDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnets available for the RDS DB Instance
+      SubnetIds:
+        Ref: Subnets
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow access to the postgress from the ECS Cluster
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '5432'
+        ToPort: '5432'
+
+  TheDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage:
+        Ref: TheDBAllocatedStorage
+      AutoMinorVersionUpgrade: 'false'
+      VPCSecurityGroups:
+      - Ref: SecurityGroup
+      DBName:
+        Ref: TheDBName
+      DBInstanceClass:
+        Ref: TheDBInstanceClass
+      DBSubnetGroupName:
+        Ref: TheDBSubnetGroup
+      Engine: postgres
+      EngineVersion: 9.3.10
+      MasterUsername:
+        Ref: TheDBUser
+      MasterUserPassword:
+        Ref: TheDBPassword
+      MultiAZ:
+        Ref: IsMultiAZDatabase
+      StorageType: gp2
+      Tags:
+        - Key: DatabaseServer
+          Value: !Ref TheDBIdentifier
+        - Key: Environment
+          Value: !Ref EnvironmentName
+Outputs:
+  JDBCConnectionString:
+    Description: JDBC connection string for database
+    Value:
+      Fn::Join:
+      - ''
+      - - jdbc:postgresql://
+        - Fn::GetAtt:
+          - TheDB
+          - Endpoint.Address
+        - ":"
+        - Fn::GetAtt:
+          - TheDB
+          - Endpoint.Port
+        - "/"
+        - Ref: TheDBName
+  DBAddress:
+    Description: address of database endpoint
+    Value:
+      Fn::GetAtt:
+      - TheDB
+      - Endpoint.Address
+  DBPort:
+    Description: database endpoint port
+    Value:
+      Fn::GetAtt:
+      - TheDB
+      - Endpoint.Port

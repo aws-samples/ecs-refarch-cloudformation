@@ -1,4 +1,5 @@
 Description: >
+
     This template deploys a VPC, with a pair of public and private subnets spread
     across two Availabilty Zones. It deploys an Internet Gateway, with a default
     route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),
@@ -7,10 +8,13 @@ Description: >
     It then deploys a highly available ECS cluster using an AutoScaling Group, with
     ECS hosts distributed across multiple Availability Zones.
 
+    It then deploys a Highly available RDS Multi Availability Zone database services service using ()
+
     Finally, it deploys a pair of example ECS services from containers published in
     Amazon EC2 Container Registry (Amazon ECR).
 
-    It will eventually deploy the db services
+    Based on AWSLabs ECS Reference Arhitecture
+    https://github.com/awslabs/ecs-refarch-cloudformation
 
     Last Modified: 17th February 2017
     Author Dan Carr (ddcarr@gmail.com)
@@ -20,7 +24,7 @@ Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/master.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/vpc.yaml
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            10.180.0.0/16
@@ -53,11 +57,27 @@ Resources:
             TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/ecs-cluster.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                InstanceType: t2.large
-                ClusterSize: 4
+                InstanceType: t2.micro
+                ClusterSize: 2
                 VPC: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+
+    HomelessRDS:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/rds.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAtt VPC.Outputs.VPC
+                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                TheDBIdentifier: ''
+                TheDBName: ''
+                TheDBUser: ''
+                TheDBPassword: ''
+                TheDBAllocatedStorage: '5'
+                TheDBInstanceClass: 'db.t2.micro'
+                IsMultiAZDatabase: 'false'
 
     ProductService:
         Type: AWS::CloudFormation::Stack
