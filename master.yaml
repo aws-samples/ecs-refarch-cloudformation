@@ -24,7 +24,7 @@ Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/vpc.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/infrastructure/vpc.yaml
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            10.180.0.0/16
@@ -36,7 +36,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/security-groups.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/infrastructure/security-groups.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -44,7 +44,7 @@ Resources:
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/load-balancers.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/infrastructure/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -54,7 +54,7 @@ Resources:
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/ecs-cluster.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/infrastructure/ecs-cluster.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 InstanceType: t2.micro
@@ -66,7 +66,7 @@ Resources:
     HomelessRDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/rds.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/infrastructure/rds.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
