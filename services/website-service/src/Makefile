@@ -27,7 +27,7 @@ run: image
 
 publish:  
 	$(call blue, "Publishing Docker image to registry...")
-	docker tag ${name}:latest ${registry}/${name}:${version}
+	docker tag ${name}:${version} ${registry}/${name}:${version}
 	docker push ${registry}/${name}:${version} 
 
 clean: 
