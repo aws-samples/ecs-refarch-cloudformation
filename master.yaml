@@ -63,52 +63,92 @@ Resources:
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
 
-    HomelessRDS:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/infrastructure/rds.yaml
-            Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
-                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
-                TheDBIdentifier: ''
-                TheDBName: ''
-                TheDBUser: ''
-                TheDBPassword: ''
-                TheDBAllocatedStorage: '5'
-                TheDBInstanceClass: 'db.t2.micro'
-                IsMultiAZDatabase: 'false'
+    # HomelessRDS:
+    #     Type: AWS::CloudFormation::Stack
+    #     Properties:
+    #         TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/infrastructure/rds.yaml
+    #         Parameters:
+    #             EnvironmentName: !Ref AWS::StackName
+    #             VPC: !GetAtt VPC.Outputs.VPC
+    #             Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+    #             TheDBIdentifier: 'foinkenstein'
+    #             TheDBName: 'foinkme'
+    #             TheDBUser: 'postgres'
+    #             TheDBPassword: 'postgres'
+    #             TheDBAllocatedStorage: '5'
+    #             TheDBInstanceClass: 'db.t2.micro'
+    #             IsMultiAZDatabase: 'false'
 
-    ProductService:
+    # BudgetService:
+    #     Type: AWS::CloudFormation::Stack
+    #     Properties:
+    #         TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/services/budget-service/service.yaml
+    #         Parameters:
+    #             VPC: !GetAtt VPC.Outputs.VPC
+    #             Cluster: !GetAtt ECS.Outputs.Cluster
+    #             DesiredCount: 2
+    #             Listener: !GetAtt ALB.Outputs.Listener
+    #             Path: /budget
+    #
+
+    # EmerresponeService:
+    #     Type: AWS::CloudFormation::Stack
+    #     Properties:
+    #         TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/services/emerresponse-service/service.yaml
+    #         Parameters:
+    #             VPC: !GetAtt VPC.Outputs.VPC
+    #             Cluster: !GetAtt ECS.Outputs.Cluster
+    #             DesiredCount: 2
+    #             Listener: !GetAtt ALB.Outputs.Listener
+    #             Path: /emerresponse
+
+    HomelessService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/services/product-service/service.yaml
+            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/services/homeless-service/service.yaml
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 DesiredCount: 2
                 Listener: !GetAtt ALB.Outputs.Listener
-                Path: /products
+                Path: /homeless
 
-    WebsiteService:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/services/website-service/service.yaml
-            Parameters:
-                VPC: !GetAtt VPC.Outputs.VPC
-                Cluster: !GetAtt ECS.Outputs.Cluster
-                DesiredCount: 2
-                ProductServiceUrl: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
-                Listener: !GetAtt ALB.Outputs.Listener
-                Path: /
-
+    # HousingService:
+    #     Type: AWS::CloudFormation::Stack
+    #     Properties:
+    #         TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/services/housing-service/service.yaml
+    #         Parameters:
+    #             VPC: !GetAtt VPC.Outputs.VPC
+    #             Cluster: !GetAtt ECS.Outputs.Cluster
+    #             DesiredCount: 2
+    #             Listener: !GetAtt ALB.Outputs.Listener
+    #             Path: /housing
+    #
+    # TransportationService:
+    #     Type: AWS::CloudFormation::Stack
+    #     Properties:
+    #         TemplateURL: https://s3-us-west-2.amazonaws.com/cfn-templates-hacko-infra/services/transportation-service/service.yaml
+    #         Parameters:
+    #             VPC: !GetAtt VPC.Outputs.VPC
+    #             Cluster: !GetAtt ECS.Outputs.Cluster
+    #             DesiredCount: 2
+    #             Listener: !GetAtt ALB.Outputs.Listener
+    #             Path: /transportation
 
 Outputs:
 
-    ProductServiceUrl:
+    HomelessServiceUrl:
         Description: The URL endpoint for the product service
-        Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
+        Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "homeless" ]]
 
-    WebsiteServiceUrl:
-        Description: The URL endpoint for the website service
-        Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
+    EmerresponseServiceUrl:
+        Description: The URL endpoint for the product service
+        Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "emerresponse" ]]
+
+    # ProductServiceUrl:
+    #     Description: The URL endpoint for the product service
+    #     Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
+    #
+    # WebsiteServiceUrl:
+    #     Description: The URL endpoint for the website service
+    #     Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]

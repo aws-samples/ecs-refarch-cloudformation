@@ -1,0 +1,65 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation Template for PostgreSQL'
+
+Parameters:
+  VPC:
+    Default: vpc-1ba7c47c
+    Type: String
+    Description: VpcId of your existing Virtual Private Cloud(VPC)
+
+  TheSubnet:
+    Default: subnet-41142a19
+    Type: String
+    Description: the Subnet where we will deploy
+
+  EnvironmentName:
+    Type: String
+    Description: The identifier of this postgres database server
+
+  TheInstanceClass:
+    Default: t2.micro
+    Description: The database instance type
+    Type: String
+    ConstraintDescription: must select a valid database instance type.
+
+Resources:
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow access to the postgress from the ECS Cluster
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+      VpcId:
+        Ref: VPC
+
+  TheDB:
+    Type: AWS::EC2::Instance
+    Properties:
+      SecurityGroups:
+        Ref: 'DBSecurityGroup'
+      KeyName: foinkme
+      InstanceType: !Ref TheInstanceClass
+      SubnetId: TheSubnet
+      ImageId: ami-61b83801
+      Tags:
+        -
+          Key: Name
+          Value: HomelessDB
+        -
+          Key: Environment
+          Value: !Ref EnvironmentName
+
+Outputs:
+  DBAddress:
+    Description: address of database endpoint
+    Value: !GetAtt TheDB.PrivateDnsName

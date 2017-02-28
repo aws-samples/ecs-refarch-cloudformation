@@ -102,6 +102,7 @@ Resources:
             SecurityGroups:
                 - !Ref SecurityGroup
             IamInstanceProfile: !Ref ECSInstanceProfile
+            KeyName: foinkme
             UserData:
                 "Fn::Base64": !Sub |
                     #!/bin/bash
@@ -183,7 +184,8 @@ Resources:
                                 "ecr:BatchCheckLayerAvailability",
                                 "ecr:BatchGetImage",
                                 "ecr:GetDownloadUrlForLayer",
-                                "ecr:GetAuthorizationToken"
+                                "ecr:GetAuthorizationToken",
+                                "s3:GetObject"
                             ],
                             "Resource": "*"
                         }]

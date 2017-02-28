@@ -1,0 +1,741 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Creates environment needed for the ECS Reference Architecture: Service
+  Discovery'
+Metadata:
+  Maintainer:
+    Description: Chad Schmutzer <schmutze@amazon.com>
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: SSH Access
+      Parameters:
+      - KeyName
+    - Label:
+        default: ECS Cluster
+      Parameters:
+      - ECSInstanceType
+      - ECSClusterInstanceCount
+    - Label:
+        default: DNS
+      Parameters:
+      - PrivateZone
+    - Label:
+        default: Twitch App
+      Parameters:
+      - TwitchAppServiceName
+      - TwitchAppDockerImage
+      - TwitchAppPort
+    - Label:
+        default: Goodreads App
+      Parameters:
+      - GoodreadsAppServiceName
+      - GoodreadsAppDockerImage
+      - GoodreadsAppPort
+    - Label:
+        default: Portal App
+      Parameters:
+      - PortalAppServiceName
+      - PortalAppDockerImage
+      - PortalAppPort
+    ParameterLabels:
+      KeyName:
+        default: Key Name
+      ECSInstanceType:
+        default: ECS instance type
+      ECSClusterInstanceCount:
+        default: ECS cluster instance count
+      PrivateZone:
+        default: Private hosted zone name
+      TwitchAppServiceName:
+        default: Twitch app service name
+      TwitchAppDockerImage:
+        default: Twitch app Docker image
+      TwitchAppPort:
+        default: Twitch app port
+      GoodreadsAppServiceName:
+        default: Goodreads app service name
+      GoodreadsAppDockerImage:
+        default: Goodreads app Docker image
+      GoodreadsAppPort:
+        default: Goodreads app port
+      PortalAppServiceName:
+        default: Portal app service name
+      PortalAppDockerImage:
+        default: Portal app Docker image
+      PortalAppPort:
+        default: Portal app port
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair
+  ECSInstanceType:
+    Type: String
+    Description: ECS instance type
+    Default: t2.micro
+    AllowedValues:
+    - t2.micro
+    - t2.small
+    - t2.medium
+    ConstraintDescription: Must be t2.micro, t2.small, t2.medium
+  ECSClusterInstanceCount:
+    Type: Number
+    Description: The number of EC2 instances in the ECS Cluster
+    Default: '2'
+    AllowedValues:
+    - '2'
+    - '3'
+    - '4'
+  PortalAppServiceName:
+    Type: String
+    Description: The name of the Portal app ECS service
+    Default: portalapp
+  PortalAppPort:
+    Type: Number
+    Description: The port the Portal app will run on
+    Default: '80'
+  PortalAppDockerImage:
+    Type: String
+    Description: The Portal app Docker image
+  TwitchAppServiceName:
+    Type: String
+    Description: The name of the Twitch app ECS service
+    Default: twitchapp
+  TwitchAppPort:
+    Type: Number
+    Description: The port the Twitch app will run on
+    Default: '8080'
+  TwitchAppDockerImage:
+    Type: String
+    Description: The Twitch app Docker image
+  GoodreadsAppServiceName:
+    Type: String
+    Description: The name of the Goodreads app ECS service
+    Default: goodreadsapp
+  GoodreadsAppPort:
+    Type: Number
+    Description: The port the Goodreads app will run on
+    Default: '9090'
+  GoodreadsAppDockerImage:
+    Type: String
+    Description: The Goodreads app Docker image
+  PrivateZone:
+    Type: String
+    Description: Private hosted zone name
+    Default: ecs.internal
+Mappings:
+  AmazonLinuxAMI:
+    us-east-1:
+      AMI: ami-55870742
+    us-west-1:
+      AMI: ami-07713767
+    us-west-2:
+      AMI: ami-241bd844
+    eu-west-1:
+      AMI: ami-c74127b4
+    eu-central-1:
+      AMI: ami-3b54be54
+    ap-northeast-1:
+      AMI: ami-2b08f44a
+    ap-southeast-1:
+      AMI: ami-6b61bc08
+    ap-southeast-2:
+      AMI: ami-d5b59eb6
+  VPCLayout:
+    VPC:
+      CIDR: 10.5.0.0/16
+    PublicSubnet1Config:
+      CIDR: 10.5.10.0/24
+    PublicSubnet2Config:
+      CIDR: 10.5.15.0/24
+Resources:
+  LoadBalancerPortalApp:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Subnets:
+      - Ref: PublicSubnet1
+      - Ref: PublicSubnet2
+      Listeners:
+      - LoadBalancerPort: '80'
+        InstancePort:
+          Ref: PortalAppPort
+        Protocol: HTTP
+      HealthCheck:
+        Target: HTTP:80/
+        HealthyThreshold: '2'
+        UnhealthyThreshold: '5'
+        Interval: '5'
+        Timeout: '4'
+      CrossZone: 'true'
+      SecurityGroups:
+      - Ref: LoadBalancerPortalAppSecurityGroup
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+      Scheme: internet-facing
+  LoadBalancerTwitchApp:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Subnets:
+      - Ref: PublicSubnet1
+      - Ref: PublicSubnet2
+      Listeners:
+      - LoadBalancerPort: '80'
+        InstancePort:
+          Ref: TwitchAppPort
+        Protocol: TCP
+      HealthCheck:
+        Target:
+          Fn::Join:
+          - ''
+          - - 'HTTP:'
+            - Ref: TwitchAppPort
+            - "/health"
+        HealthyThreshold: '2'
+        UnhealthyThreshold: '5'
+        Interval: '5'
+        Timeout: '4'
+      CrossZone: 'true'
+      SecurityGroups:
+      - Ref: LoadBalancerTwitchAppSecurityGroup
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+      Scheme: internal
+  LoadBalancerGoodreadsApp:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Subnets:
+      - Ref: PublicSubnet1
+      - Ref: PublicSubnet2
+      Listeners:
+      - LoadBalancerPort: '80'
+        InstancePort:
+          Ref: GoodreadsAppPort
+        Protocol: TCP
+      HealthCheck:
+        Target:
+          Fn::Join:
+          - ''
+          - - 'HTTP:'
+            - Ref: GoodreadsAppPort
+            - "/health"
+        HealthyThreshold: '2'
+        UnhealthyThreshold: '5'
+        Interval: '5'
+        Timeout: '4'
+      CrossZone: 'true'
+      SecurityGroups:
+      - Ref: LoadBalancerGoodreadsAppSecurityGroup
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+      Scheme: internal
+  ECSInstanceAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones:
+      - Fn::GetAtt:
+        - PublicSubnet1
+        - AvailabilityZone
+      - Fn::GetAtt:
+        - PublicSubnet2
+        - AvailabilityZone
+      VPCZoneIdentifier:
+      - Ref: PublicSubnet1
+      - Ref: PublicSubnet2
+      LaunchConfigurationName:
+        Ref: ECSInstanceLaunchConfiguration
+      MinSize:
+        Ref: ECSClusterInstanceCount
+      MaxSize:
+        Ref: ECSClusterInstanceCount
+      DesiredCapacity:
+        Ref: ECSClusterInstanceCount
+      Tags:
+      - Key: Application
+        Value:
+          Ref: AWS::StackName
+        PropagateAtLaunch: 'true'
+      - Key: Name
+        Value: ECS refarch instance
+        PropagateAtLaunch: 'true'
+  ECSInstanceLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          ConfigCluster:
+          - Install
+        Install:
+          files:
+            "/home/ec2-user/.aws/config":
+              mode: '000755'
+              owner: ec2-user
+              group: root
+              content:
+                Fn::Join:
+                - ''
+                - - "[default]\n"
+                  - 'region = '
+                  - Ref: AWS::Region
+                  - "\n"
+            "/etc/ecs/ecs.config":
+              content:
+                Fn::Join:
+                - ''
+                - - ECS_CLUSTER=
+                  - Ref: ECSCluster
+              mode: '000755'
+              owner: root
+              group: root
+    Properties:
+      ImageId:
+        Fn::FindInMap:
+        - AmazonLinuxAMI
+        - Ref: AWS::Region
+        - AMI
+      InstanceType:
+        Ref: ECSInstanceType
+      AssociatePublicIpAddress: 'true'
+      IamInstanceProfile:
+        Ref: ECSInstanceProfile
+      SecurityGroups:
+      - Ref: ECSInstanceSecurityGroup
+      KeyName:
+        Ref: KeyName
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash -xe\n"
+            - 'yum update -y
+
+'
+            - 'yum install -y aws-cfn-bootstrap git aws-cli
+
+'
+            - "# Install the files and packages from the metadata\n"
+            - "/opt/aws/bin/cfn-init -v "
+            - "         --stack "
+            - Ref: AWS::StackName
+            - "         --resource ECSInstanceLaunchConfiguration "
+            - "         --configsets ConfigCluster "
+            - "         --region "
+            - Ref: AWS::Region
+            - "\n"
+            - "# Signal the status from cfn-init\n"
+            - "/opt/aws/bin/cfn-signal -e $? "
+            - "         --stack "
+            - Ref: AWS::StackName
+            - "         --resource ECSInstanceAutoScalingGroup "
+            - "         --region "
+            - Ref: AWS::Region
+            - "\n"
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      CidrBlock:
+        Fn::FindInMap:
+        - VPCLayout
+        - VPC
+        - CIDR
+      Tags:
+      - Key: VPC
+        Value: ECS
+      - Key: Name
+        Value: ECS refarch service discovery
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn:
+    - VPC
+    - InternetGateway
+    Properties:
+      VpcId:
+        Ref: VPC
+      InternetGatewayId:
+        Ref: InternetGateway
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: AttachGateway
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock:
+        Fn::FindInMap:
+        - VPCLayout
+        - PublicSubnet1Config
+        - CIDR
+      AvailabilityZone:
+        Fn::Select:
+        - '0'
+        - Fn::GetAZs: ''
+      Tags:
+      - Key: Name
+        Value: Public Subnet 1
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn: AttachGateway
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock:
+        Fn::FindInMap:
+        - VPCLayout
+        - PublicSubnet2Config
+        - CIDR
+      AvailabilityZone:
+        Fn::Select:
+        - '1'
+        - Fn::GetAZs: ''
+      Tags:
+      - Key: Name
+        Value: Public Subnet 2
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn:
+    - VPC
+    - AttachGateway
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: Public
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+    - PublicRouteTable
+    - AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicRouteTable
+    - PublicSubnet1
+    - AttachGateway
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet1
+      RouteTableId:
+        Ref: PublicRouteTable
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicRouteTable
+    - PublicSubnet2
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet2
+      RouteTableId:
+        Ref: PublicRouteTable
+  LoadBalancerPortalAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: LoadBalancer Internet-facing Security Group
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort:
+          Ref: PortalAppPort
+        ToPort:
+          Ref: PortalAppPort
+        CidrIp: 0.0.0.0/0
+      Tags:
+      - Key: Name
+        Value: LoadBalancerPortalAppSecurityGroup
+  LoadBalancerTwitchAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: LoadBalancer Twitch app Security Group
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: LoadBalancerTwitchAppSecurityGroup
+  LoadBalancerTwitchAppSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: ECSInstanceSecurityGroup
+    Properties:
+      GroupId:
+        Ref: LoadBalancerTwitchAppSecurityGroup
+      IpProtocol: tcp
+      FromPort: '80'
+      ToPort: '80'
+      SourceSecurityGroupId:
+        Ref: ECSInstanceSecurityGroup
+  LoadBalancerGoodreadsAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: LoadBalancer Goodreads app Security Group
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: LoadBalancerGoodreadsAppSecurityGroup
+  LoadBalancerGoodreadsAppSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: ECSInstanceSecurityGroup
+    Properties:
+      GroupId:
+        Ref: LoadBalancerGoodreadsAppSecurityGroup
+      IpProtocol: tcp
+      FromPort: '80'
+      ToPort: '80'
+      SourceSecurityGroupId:
+        Ref: ECSInstanceSecurityGroup
+  ECSInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: AttachGateway
+    Properties:
+      GroupDescription: Security Group for ECSInstance
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: ECSInstanceSecurityGroup
+  ECSInstanceSecurityGroupPortalApp:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: LoadBalancerPortalAppSecurityGroup
+    Properties:
+      GroupId:
+        Ref: ECSInstanceSecurityGroup
+      IpProtocol: tcp
+      FromPort:
+        Ref: PortalAppPort
+      ToPort:
+        Ref: PortalAppPort
+      SourceSecurityGroupId:
+        Ref: LoadBalancerPortalAppSecurityGroup
+  ECSInstanceSecurityGroupTwitchApp:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: LoadBalancerTwitchAppSecurityGroup
+    Properties:
+      GroupId:
+        Ref: ECSInstanceSecurityGroup
+      IpProtocol: tcp
+      FromPort:
+        Ref: TwitchAppPort
+      ToPort:
+        Ref: TwitchAppPort
+      SourceSecurityGroupId:
+        Ref: LoadBalancerTwitchAppSecurityGroup
+  ECSInstanceSecurityGroupGoodreadsApp:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: LoadBalancerGoodreadsAppSecurityGroup
+    Properties:
+      GroupId:
+        Ref: ECSInstanceSecurityGroup
+      IpProtocol: tcp
+      FromPort:
+        Ref: GoodreadsAppPort
+      ToPort:
+        Ref: GoodreadsAppPort
+      SourceSecurityGroupId:
+        Ref: LoadBalancerGoodreadsAppSecurityGroup
+  ECSInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+  ECSInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn: ECSInstanceRole
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: ECSInstanceRole
+  ECSServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ecs.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole
+  LambdaServiceRole:
+    Type: AWS::IAM::Role
+    DependsOn: DNS
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: CloudWatchEventsLambdaRoute53
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - route53:ChangeResourceRecordSets
+            Resource:
+              Fn::Join:
+              - ''
+              - - arn:aws:route53:::hostedzone/
+                - Ref: DNS
+          - Effect: Allow
+            Action:
+            - elasticloadbalancing:DescribeLoadBalancers
+            Resource: "*"
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+  ECSTaskDefinitionPortalApp:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: PortalApp
+        Image:
+          Ref: PortalAppDockerImage
+        Memory: '100'
+        Cpu: '100'
+        PortMappings:
+        - HostPort:
+            Ref: PortalAppPort
+          ContainerPort: '80'
+        Environment:
+        - Name: TWITCHAPPENDPOINT
+          Value:
+            Fn::Join:
+            - ''
+            - - Ref: TwitchAppServiceName
+              - "."
+              - Ref: PrivateZone
+              - ":80"
+        - Name: GOODREADSAPPENDPOINT
+          Value:
+            Fn::Join:
+            - ''
+            - - Ref: GoodreadsAppServiceName
+              - "."
+              - Ref: PrivateZone
+              - ":80"
+  ECSTaskDefinitionTwitchApp:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: TwitchApp
+        Image:
+          Ref: TwitchAppDockerImage
+        Memory: '100'
+        Cpu: '100'
+        PortMappings:
+        - HostPort:
+            Ref: TwitchAppPort
+          ContainerPort: '80'
+  ECSTaskDefinitionGoodreadsApp:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: GoodreadsApp
+        Image:
+          Ref: GoodreadsAppDockerImage
+        Memory: '100'
+        Cpu: '100'
+        PortMappings:
+        - HostPort:
+            Ref: GoodreadsAppPort
+          ContainerPort: '80'
+  DNS:
+    Type: AWS::Route53::HostedZone
+    DependsOn: VPC
+    Properties:
+      HostedZoneConfig:
+        Comment: 'Private hosted zone for ECS Reference Architecture: Service Discovery'
+      Name:
+        Ref: PrivateZone
+      VPCs:
+      - VPCId:
+          Ref: VPC
+        VPCRegion:
+          Ref: AWS::Region
+Outputs:
+  LoadBalancerPortalAppUrl:
+    Description: Public hostname of the Portal app load balancer
+    Value:
+      Fn::Join:
+      - ''
+      - - http://
+        - Fn::GetAtt:
+          - LoadBalancerPortalApp
+          - DNSName
+  LoadBalancerPortalApp:
+    Description: Name of the Portal app load balancer
+    Value:
+      Ref: LoadBalancerPortalApp
+  LoadBalancerTwitchApp:
+    Description: Name of the Twitch app load balancer
+    Value:
+      Ref: LoadBalancerTwitchApp
+  LoadBalancerGoodreadsApp:
+    Description: Name of the Goodreads app load balancer
+    Value:
+      Ref: LoadBalancerGoodreadsApp
+  ECSClusterName:
+    Description: Name of the ECS cluster
+    Value:
+      Ref: ECSCluster
+  GoodreadsAppTaskDefinition:
+    Description: The task definition for the Goodreads app
+    Value:
+      Ref: ECSTaskDefinitionGoodreadsApp
+  TwitchAppTaskDefinition:
+    Description: The task definition for the twitch app
+    Value:
+      Ref: ECSTaskDefinitionTwitchApp
+  PortalAppTaskDefinition:
+    Description: The task definition for the portal app
+    Value:
+      Ref: ECSTaskDefinitionPortalApp
+  Route53PrivateHostedZoneID:
+    Description: ID of the Route53 private hosted zone
+    Value:
+      Ref: DNS
+  ECSServiceRole:
+    Description: Name of the ECS service role
+    Value:
+      Ref: ECSServiceRole
+  LambdaServiceRole:
+    Description: Name of the Lambda service role
+    Value:
+      Ref: LambdaServiceRole

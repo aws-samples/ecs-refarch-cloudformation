@@ -1,5 +1,5 @@
 Description: >
-    This is an example of a long running ECS service that serves a JSON API of products.
+    This is an example of a long running ECS service that serves a JSON API of housing.
 
 Parameters:
 
@@ -23,7 +23,7 @@ Parameters:
     Path:
         Description: The path to register with the Application Load Balancer
         Type: String
-        Default: /products
+        Default: /housing
 
 Resources:
 
@@ -36,18 +36,18 @@ Resources:
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
             LoadBalancers:
-                - ContainerName: "product-service"
-                  ContainerPort: 8001
+                - ContainerName: "housing-service"
+                  ContainerPort: 8000
                   TargetGroupArn: !Ref TargetGroup
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Family: product-service
+            Family: housing-service
             ContainerDefinitions:
-                - Name: product-service
+                - Name: housing-service
                   Essential: true
-                  Image: pdxdiver/transportation-service:latest
+                  Image: pdxdiver/housing-service:latest
                   Memory: 128
                   PortMappings:
                     - ContainerPort: 8000
@@ -72,7 +72,7 @@ Resources:
             Matcher:
                 HttpCode: 200-299
             HealthCheckIntervalSeconds: 10
-            HealthCheckPath: /products
+            HealthCheckPath: /housing/homeless
             HealthCheckProtocol: HTTP
             HealthCheckTimeoutSeconds: 5
             HealthyThresholdCount: 2
@@ -81,7 +81,7 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
         Properties:
             ListenerArn: !Ref Listener
-            Priority: 4
+            Priority: 9
             Conditions:
                 - Field: path-pattern
                   Values:
