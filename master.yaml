@@ -11,7 +11,7 @@ Description: >
     Finally, it deploys a pair of example ECS services from containers published in 
     Amazon EC2 Container Registry (Amazon ECR).
 
-    Last Modified: 11th January 2017
+    Last Modified: 14th March 2017
     Author: Paul Maddox <pmaddox@amazon.com>
 
 Parameters:
