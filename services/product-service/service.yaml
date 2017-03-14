@@ -57,10 +57,10 @@ Resources:
                         awslogs-group: !Ref AWS::StackName
                         awslogs-region: !Ref AWS::Region
                   MountPoints:
-                    - ContainerPath: /testvol
-                      SourceVolume: TestVol
+                    - ContainerPath: /volume
+                      SourceVolume: ExampleVolume
             Volumes:
-              - Name: TestVol
+              - Name: ExampleVolume
     
     CloudWatchLogsGroup:
         Type: AWS::Logs::LogGroup

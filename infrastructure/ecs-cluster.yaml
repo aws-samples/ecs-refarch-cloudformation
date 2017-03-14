@@ -132,15 +132,8 @@ Resources:
                     Content-Transfer-Encoding: 7bit
                     Content-Type: text/cloud-config
                     Mime-Version: 1.0
-                     
+
                     #cloud-config
-                    #fs_setup:
-                    #  - label: volumes
-                    #    filesystem: ext4
-                    #    device: /dev/xvdf
-                    #    partition: none
-                    #mounts:
-                    #  - [ LABEL=volumes, /var/lib/docker/volumes, auto, defaults]
                     #### Have to do this in bootcmd because fs_setup is not supported
                     #### yet in Amazon Linux
                     bootcmd:

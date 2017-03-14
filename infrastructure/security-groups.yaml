@@ -4,11 +4,11 @@ Description: >
     by all of the other nested templates.
 
 Parameters:
-    
+
     EnvironmentName:
         Description: An environment name that will be prefixed to resource names
         Type: String
-    
+
     VPC:
         Type: AWS::EC2::VPC::Id
         Description: Choose which VPC the security groups should be deployed to

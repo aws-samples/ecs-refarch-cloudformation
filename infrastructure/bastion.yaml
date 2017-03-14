@@ -29,13 +29,34 @@ Parameters:
 
 Mappings:
     AWSRegionToAMI:
-        ap-southeast-1:
-            AMI:  "ami-7243e611"
-        ap-southeast-2:
-            AMI:  "ami-55d4e436"
+        us-east-1:
+            AMI: ami-0b33d91d
+        us-east-2:
+            AMI: ami-c55673a0
         us-west-2:
-            AMI: "ami-b04e92d0"
-
+            AMI: ami-f173cc91
+        us-west-1:
+            AMI: ami-165a0876
+        ca-central-1:
+            AMI: ami-ebed508f
+        eu-west-1:
+            AMI: ami-70edb016
+        eu-west-2:
+            AMI: ami-f1949e95
+        eu-central-1:
+            AMI: ami-af0fc0c0
+        ap-southeast-1:
+            AMI: ami-dc9339bf
+        ap-northeast-2:
+            AMI: ami-dac312b4
+        ap-northeast-1:
+            AMI: ami-56d4ad31
+        ap-southeast-2:
+            AMI: ami-1c47407f
+        ap-south-1:
+            AMI: ami-f9daac96
+        sa-east-1:
+            AMI: ami-80086dec
 Resources:
     BastionHost:
         Type: "AWS::EC2::Instance"
