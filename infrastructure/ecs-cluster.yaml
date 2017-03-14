@@ -30,6 +30,10 @@ Parameters:
         Description: Select the Security Group to use for the ECS cluster hosts
         Type: AWS::EC2::SecurityGroup::Id
 
+    SSHKey:
+        Type: AWS::EC2::KeyPair::KeyName
+        Description: SSH Key for to access to the ECS Hosts
+
 Mappings:
 
     # These are the latest ECS optimized AMIs as of February 2017:
@@ -90,58 +94,55 @@ Resources:
             ResourceSignal: 
                 Timeout: PT15M
         UpdatePolicy:
-            AutoScalingRollingUpdate:
-                MinInstancesInService: 1
-                MaxBatchSize: 1
-                PauseTime: PT15M
-                WaitOnResourceSignals: true
+            AutoScalingReplacingUpdate:
+                WillReplace: true
         
     ECSLaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties:
+            KeyName: !Ref SSHKey
             ImageId:  !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
             InstanceType: !Ref InstanceType
             SecurityGroups: 
                 - !Ref SecurityGroup
             IamInstanceProfile: !Ref ECSInstanceProfile
+            BlockDeviceMappings:
+                - DeviceName: /dev/xvdf
+                  Ebs:
+                    DeleteOnTermination: True
+                    VolumeSize: 20
+                    VolumeType: gp2
             UserData: 
                 "Fn::Base64": !Sub |
+                    Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
+                    MIME-Version: 1.0
+                    --MIMEBOUNDARY
+                    Content-Disposition: attachment; filename="user_data.sh"
+                    Content-Transfer-Encoding: 7bit
+                    Content-Type: text/x-shellscript
+                    Mime-Version: 1.0
+
                     #!/bin/bash
+                    echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
                     yum install -y aws-cfn-bootstrap
-                    /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
-                    /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
+                    /opt/aws/bin/cfn-signal -s true --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
 
-        Metadata:
-            AWS::CloudFormation::Init:
-                config:
-                    commands:
-                        01_add_instance_to_cluster:
-                            command: !Sub echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-                    files:
-                        "/etc/cfn/cfn-hup.conf":
-                            mode: 000400
-                            owner: root
-                            group: root
-                            content: !Sub |
-                                [main]
-                                stack=${AWS::StackId}
-                                region=${AWS::Region}
-                        
-                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
-                            content: !Sub |
-                                [cfn-auto-reloader-hook]
-                                triggers=post.update
-                                path=Resources.ContainerInstances.Metadata.AWS::CloudFormation::Init
-                                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
+                    --MIMEBOUNDARY
+                    Content-Disposition: attachment; filename="cloud_config.yaml"
+                    Content-Transfer-Encoding: 7bit
+                    Content-Type: text/cloud-config
+                    Mime-Version: 1.0
 
-                    services: 
-                        sysvinit:
-                            cfn-hup: 
-                                enabled: true
-                                ensureRunning: true
-                                files: 
-                                    - /etc/cfn/cfn-hup.conf
-                                    - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+                    #cloud-config
+                    #### Have to do this in bootcmd because fs_setup is not supported
+                    #### yet in Amazon Linux
+                    bootcmd:
+                      - cloud-init-per once mkfs mkfs.ext4 -L volumes /dev/xvdf
+                      - cloud-init-per once fstab echo "LABEL=volumes /var/lib/docker/volumes ext4 defaults 0 2" >> /etc/fstab
+                      - cloud-init-per once dir mkdir -p /var/lib/docker/volumes
+                      - cloud-init-per once mount mount /var/lib/docker/volumes
+
+
 
     # This IAM Role is attached to all of the ECS hosts. It is based on the default role
     # published here:

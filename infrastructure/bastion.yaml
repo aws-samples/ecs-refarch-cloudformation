@@ -1,0 +1,75 @@
+Description: >
+    This template deploys a Bastion host to the provided VPC.
+
+Parameters:
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    InstanceType:
+        Description: Which instance type should we use to build the Bastion Host?
+        Type: String
+        Default: t2.micro
+
+    VPC:
+        Description: Choose which VPC this Bastion Host should be deployed to
+        Type: AWS::EC2::VPC::Id
+
+    Subnets:
+        Description: Choose which subnets this Bastion host should should be deployed to
+        Type: List<AWS::EC2::Subnet::Id>
+
+    SecurityGroup:
+        Description: Select the Security Group to use for the Bastion host
+        Type: AWS::EC2::SecurityGroup::Id
+
+    SSHKey:
+        Type: AWS::EC2::KeyPair::KeyName
+        Description: SSH Key for to access to the Bastion Host
+
+Mappings:
+    AWSRegionToAMI:
+        us-east-1:
+            AMI: ami-0b33d91d
+        us-east-2:
+            AMI: ami-c55673a0
+        us-west-2:
+            AMI: ami-f173cc91
+        us-west-1:
+            AMI: ami-165a0876
+        ca-central-1:
+            AMI: ami-ebed508f
+        eu-west-1:
+            AMI: ami-70edb016
+        eu-west-2:
+            AMI: ami-f1949e95
+        eu-central-1:
+            AMI: ami-af0fc0c0
+        ap-southeast-1:
+            AMI: ami-dc9339bf
+        ap-northeast-2:
+            AMI: ami-dac312b4
+        ap-northeast-1:
+            AMI: ami-56d4ad31
+        ap-southeast-2:
+            AMI: ami-1c47407f
+        ap-south-1:
+            AMI: ami-f9daac96
+        sa-east-1:
+            AMI: ami-80086dec
+Resources:
+    BastionHost:
+        Type: "AWS::EC2::Instance"
+        Properties:
+            ImageId: !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
+            InstanceType: !Ref InstanceType
+            KeyName: !Ref SSHKey
+            SecurityGroupIds:
+              - !Ref SecurityGroup
+            SubnetId: !Select [ 0, !Ref Subnets]
+            Tags:
+              - Key: Name
+                Value: !Sub ${EnvironmentName} Bastion Host
+
+
+
