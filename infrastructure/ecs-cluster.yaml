@@ -131,7 +131,7 @@ Resources:
                             content: !Sub |
                                 [cfn-auto-reloader-hook]
                                 triggers=post.update
-                                path=Resources.ContainerInstances.Metadata.AWS::CloudFormation::Init
+                                path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init
                                 action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
 
                     services: 
