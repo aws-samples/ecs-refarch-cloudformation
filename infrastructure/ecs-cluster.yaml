@@ -34,8 +34,8 @@ Mappings:
 
     # These are the latest ECS optimized AMIs as of February 2017:
     #
-    #   amzn-ami-2016.09.f-amazon-ecs-optimized
-    #   ECS agent:    1.14.0
+    #   amzn-ami-2017.03.d-amazon-ecs-optimized
+    #   ECS agent:    1.14.3
     #   Docker:       1.12.6
     #   ecs-init:     1.14.0-2
     #
