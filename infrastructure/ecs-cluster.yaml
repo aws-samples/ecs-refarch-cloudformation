@@ -44,28 +44,28 @@ Mappings:
     # (note the AMI identifier is region specific) 
 
     AWSRegionToAMI:
-        us-east-1:
-            AMI: ami-b2df2ca4
         us-east-2:
-            AMI: ami-832b0ee6
-        us-west-1:
-            AMI: ami-dd104dbd
+            AMI: ami-207b5a45
+        us-east-1:
+            AMI: ami-04351e12
         us-west-2:
-            AMI: ami-022b9262
-        eu-west-1:
-            AMI: ami-a7f2acc1
+            AMI: ami-57d9cd2e
+        us-west-1:
+            AMI: ami-7d664a1d
         eu-west-2:
-            AMI: ami-3fb6bc5b
+            AMI: ami-ff15039b
+        eu-west-1:
+            AMI: ami-809f84e6
         eu-central-1:
-            AMI: ami-ec2be583
+            AMI: ami-a3a006cc
         ap-northeast-1:
-            AMI: ami-c393d6a4
-        ap-southeast-1:
-            AMI: ami-a88530cb
+            AMI: ami-e4657283
         ap-southeast-2:
-            AMI: ami-8af8ffe9
+            AMI: ami-42e9f921
+        ap-southeast-1:
+            AMI: ami-19f7787a
         ca-central-1:
-            AMI: ami-ead5688e
+            AMI: ami-3da81759
 
 Resources:
 
