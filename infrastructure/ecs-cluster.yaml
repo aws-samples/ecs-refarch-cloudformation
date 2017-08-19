@@ -94,6 +94,12 @@ Resources:
                 MinInstancesInService: 1
                 MaxBatchSize: 1
                 PauseTime: PT15M
+                SuspendProcesses:
+                  - HealthCheck
+                  - ReplaceUnhealthy
+                  - AZRebalance
+                  - AlarmNotification
+                  - ScheduledActions
                 WaitOnResourceSignals: true
         
     ECSLaunchConfiguration:
