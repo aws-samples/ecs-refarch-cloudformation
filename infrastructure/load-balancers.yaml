@@ -37,8 +37,10 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::Listener
         Properties:
             LoadBalancerArn: !Ref LoadBalancer
-            Port: 80
-            Protocol: HTTP 
+            Certificates:
+                - CertificateArn: arn:aws:iam::347501087758:server-certificate/cloudfront/cyglass-wildcard-2017
+            Port: 443
+            Protocol: HTTPS
             DefaultActions: 
                 - Type: forward
                   TargetGroupArn: !Ref DefaultTargetGroup
@@ -51,7 +53,7 @@ Resources:
         Properties:
             Name: !Sub ${EnvironmentName}-default
             VpcId: !Ref VPC
-            Port: 80
+            Port: 8080
             Protocol: HTTP
            
 Outputs:

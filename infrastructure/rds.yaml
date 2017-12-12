@@ -1,0 +1,129 @@
+Description: >
+    This is RDS Aurora MySQL cluster with two instances
+    
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+        Default: staging
+        AllowedValues:
+            - dev
+            - staging
+            - production
+
+    VPC:
+        Description: Choose which VPC this ECS cluster should be deployed to
+        Type: AWS::EC2::VPC::Id
+        
+    MasterDBUsername:
+        Description: Required - Username of database master user
+        Type: String
+        Default: root
+        
+    MasterDBPassword:
+        Description: Required - Password of database master user
+        Type: String
+        Default: password
+
+    DatabaseInstanceType:
+        Default: db.r3.large
+        AllowedValues:
+            - db.r3.large
+            - db.r3.xlarge
+            - db.r3.2xlarge
+            - db.r3.4xlarge
+            - db.r3.8xlarge
+        Description: The instance type to use for the database
+        Type: String
+
+    DatabaseSubnets:
+        Description: The subnets to place database instances in.
+        Type: List<AWS::EC2::Subnet::Id>
+
+    SecurityGroups:
+        Description: Select the Security Groups to use for the RDS cluster
+        Type: List<AWS::EC2::SecurityGroup::Id>
+
+Resources:
+
+    RDSSubnetGroup:
+        Type: AWS::RDS::DBSubnetGroup
+        Properties:
+            DBSubnetGroupDescription: Managed RDS subnet group
+            SubnetIds:
+                Ref: DatabaseSubnets
+
+    RDSCluster:
+        Type: AWS::RDS::DBCluster
+        Properties:
+            # AZ list must only include those the VPC is operating in!
+            AvailabilityZones: !Split ["|", !Join [ "|", [ !Select [ 0, !GetAZs ] , !Select [ 1, !GetAZs ] ]]]
+            BackupRetentionPeriod: 10
+            DatabaseName: !Ref EnvironmentName
+            DBSubnetGroupName: !Ref RDSSubnetGroup
+            Engine: aurora
+            MasterUsername: !Ref MasterDBUsername
+            MasterUserPassword: !Ref MasterDBPassword
+            Port: 3306
+            PreferredBackupWindow: 02:00-03:00
+            PreferredMaintenanceWindow: mon:03:00-mon:04:00
+            VpcSecurityGroupIds: !Ref SecurityGroups            
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-api-cluster
+
+
+    RDSPrimaryInstance:
+        Type: AWS::RDS::DBInstance
+        Properties:
+            #DBName: !Sub ${EnvironmentName}-api-primary
+            Engine: aurora
+            DBClusterIdentifier: !Ref RDSCluster 
+            DBInstanceClass: !Ref DatabaseInstanceType
+            DBSubnetGroupName: !Ref RDSSubnetGroup
+            PubliclyAccessible: false
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-api-primary    
+
+    RDSReplicaInstance:
+        Type: AWS::RDS::DBInstance
+        Properties:
+            #DBName: !Sub ${EnvironmentName}-api-replica
+            Engine: aurora
+            DBClusterIdentifier: !Ref RDSCluster 
+            DBInstanceClass: !Ref DatabaseInstanceType
+            DBSubnetGroupName: !Ref RDSSubnetGroup
+            PubliclyAccessible: false
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-api-replica
+  
+Outputs:
+  
+    RDSClusterAddress:
+        Description: Endpoint address for cluster
+        Value: !GetAtt RDSCluster.Endpoint.Address
+        Export:
+            Name: RDSClusterAddress
+            Name: !Join [ "-", [ !Ref EnvironmentName, "RDSClusterAddress" ] ]        
+  
+    RDSClusterPort:
+        Description: Endpoint port for cluster
+        Value: !GetAtt RDSCluster.Endpoint.Port
+        Export:
+            Name: RDSClusterPort
+            Name: !Join [ "-", [ !Ref EnvironmentName, "RDSClusterPort" ] ]
+  
+    JDBCConnectionString:
+        Description: Host JDBC endpoint for JDBC
+        Value: !Join [ "", [ "jdbc:mysql://",  !GetAtt RDSCluster.Endpoint.Address ,  !GetAtt RDSCluster.Endpoint.Port ] ]
+        Export:
+            Name: JDBCConnectionString
+            Name: !Join [ "-", [ !Ref EnvironmentName, "JDBCConnectionString" ] ]
+
+  
+  
+    
+    

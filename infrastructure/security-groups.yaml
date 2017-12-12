@@ -29,7 +29,7 @@ Resources:
                   IpProtocol: -1
             Tags: 
                 - Key: Name
-                  Value: !Sub ${EnvironmentName}-ECS-Hosts
+                  Value: !Sub ${EnvironmentName}-api-ecs-hosts
 
     # This security group defines who/where is allowed to access the Application Load Balancer.
     # By default, we've opened this up to the public internet (0.0.0.0/0) but can you restrict
@@ -45,7 +45,50 @@ Resources:
                   IpProtocol: -1
             Tags: 
                 - Key: Name
-                  Value: !Sub ${EnvironmentName}-LoadBalancers
+                  Value: !Sub ${EnvironmentName}-api-loadBalancers
+
+    # This security group defines who/where is allowed to access the RDS cluster directly.
+    # By default we're just allowing access from the ECS cluster.  If you want to 3306'ing 
+    # into the hosts, or expose non-load balanced services you can open their ports here.
+    RDSSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties: 
+            VpcId: !Ref VPC
+            GroupDescription: Access to the RDS cluster and the instances that run on it
+            SecurityGroupIngress:
+                # Only allow inbound access to RDS from the ECS
+                - SourceSecurityGroupId: !Ref ECSHostSecurityGroup 
+                  IpProtocol: -1
+            Tags: 
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-api-rds
+
+    # general purpose EC2 instance security group
+    InstanceSecurityGroup:
+        Type: "AWS::EC2::SecurityGroup"
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: "Enable Access to our servers via port 8080 and SSH access via port 22"
+            SecurityGroupIngress:
+                - IpProtocol: "tcp"
+                  FromPort: "22"
+                  ToPort: "22"
+                  CidrIp: "0.0.0.0/0"
+                - IpProtocol: "tcp"
+                  FromPort: "8080"
+                  ToPort: "8080"
+                  CidrIp: "0.0.0.0/0"
+                - IpProtocol: "tcp"
+                  FromPort: "80"
+                  ToPort: "80"
+                  CidrIp: "0.0.0.0/0"
+                - IpProtocol: "tcp"
+                  FromPort: "443"
+                  ToPort: "443"
+                  CidrIp: "0.0.0.0/0"
+            Tags: 
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-api-ec2              
 
 Outputs:
 
@@ -56,4 +99,17 @@ Outputs:
     LoadBalancerSecurityGroup:
         Description: A reference to the security group for load balancers
         Value: !Ref LoadBalancerSecurityGroup
+        
+    RDSSecurityGroup: 
+        Description: A reference to the security group for RDS cluster
+        Value: !Ref RDSSecurityGroup
+
+    RDSSecurityGroups: 
+        Description: A reference to a list of security group for RDS cluster
+        Value: !Join [ ",", [ !Ref RDSSecurityGroup ]]
+        
+    InstanceSecurityGroup:
+        Description: A reference to the EC2 general purpose security group
+        Value: !Ref InstanceSecurityGroup
+        
 

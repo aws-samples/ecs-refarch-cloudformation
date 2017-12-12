@@ -1,0 +1,123 @@
+# working 12/8 with standalone create-stack and single instance
+
+Description: >
+    This template deploys an EC2 instances to the provided VPC public and private subnets 
+
+Parameters:
+    
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+        Default: staging
+#    
+#    VPC:
+#        Type: AWS::EC2::VPC::Id
+#        Description: Choose which VPC the security groups should be deployed to
+
+    InstanceKeyName:
+        Description: Name of an existing EC2 KeyPair to enable SSH access to the public instance
+        Type: String
+        Default: api-staging-us-west-2
+       
+    SubnetId:
+        Description: Public subnet to place the public instance into
+        Type: AWS::EC2::Subnet::Id
+        Default: subnet-70402206
+        
+    InstanceSecurityGroup:
+        Description: Security group for this instance
+        Type: AWS::EC2::SecurityGroup::Id
+        Default: sg-892315ef
+        
+    Name:
+        Description: Name of this EC2 instance
+        Type: String
+        
+    PublicIpAddress:
+        Description: Associate a public IP with this instance (true/false)
+        Type: String
+        Default: false
+        AllowedValues:
+            - true
+            - false
+
+Mappings:
+
+    # These are the latest EC2 ubuntu image IDs as of Dec 2017:
+    AWSRegionToUbuntuAMI:
+        us-east-2:
+            AMI: ami-82f4dae7
+        us-east-1:
+            AMI: ami-aa2ea6d0
+        us-west-2:
+            AMI: ami-0def3275
+        us-west-1:
+            AMI: ami-45ead225
+        eu-west-2:
+            AMI: ami-fcc4db98
+        eu-west-1:
+            AMI: ami-8fd760f6
+        eu-central-1:
+            AMI: ami-df8406b0
+        ap-northeast-1:
+            AMI: ami-bec974d8
+        ap-northeast-2:
+            AMI: ami-3066c15e
+        ap-southeast-2:
+            AMI: ami-cab258a8
+        ap-southeast-1:
+            AMI: ami-10acfb73
+        ca-central-1:
+            AMI: ami-018b3065
+
+Conditions: 
+    HasPublicIpAddress: !Equals [ !Ref PublicIpAddress, "true" ]
+
+Resources:
+
+    EC2Instance:
+        Type: "AWS::EC2::Instance"
+        Properties:
+            KeyName: !Ref InstanceKeyName
+            #SecurityGroups: 
+            #    - !Ref InstanceSecurityGroup
+            ImageId: !FindInMap [AWSRegionToUbuntuAMI, !Ref "AWS::Region", AMI]
+            InstanceType: t2.micro
+            NetworkInterfaces:
+                - AssociatePublicIpAddress: !Ref PublicIpAddress
+                  SubnetId: !Ref SubnetId
+                  DeviceIndex: 0
+                  GroupSet:
+                      - !Ref InstanceSecurityGroup
+            Tags:
+                - Key: Name
+                  Value: !Ref Name
+                  
+Outputs:
+
+    PrivateIpAddress:
+        Description: Private IP address of instance
+        Value: !GetAtt EC2Instance.PrivateIp
+        Export:
+            Name: !Join [ "-", [ !Ref Name, "PrivateIpAddress" ] ]
+        
+    PublicIpAddress:
+        Description: Public IP address of instance
+        Value: !GetAtt EC2Instance.PublicIp
+        Condition: HasPublicIpAddress
+        Export:
+            Name: !Join [ "-", [ !Ref Name, "PublicIpAddress" ] ]
+
+    InstanceKeyName:
+        Description: Name of SSH key for instance
+        Value: !Ref InstanceKeyName
+        Export:
+            Name: !Join [ "-", [ !Ref Name, "InstanceKeyName" ] ]
+
+    InstanceId:
+        Description: Instance ID
+        Value: !Ref EC2Instance
+        Export:
+            Name: !Join [ "-", [ !Ref Name, "InstanceId" ] ]
+        
+

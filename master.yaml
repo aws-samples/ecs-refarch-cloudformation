@@ -19,27 +19,42 @@ Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/vpc.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/vpc.yaml
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            10.180.0.0/16
-                PublicSubnet1CIDR:  10.180.8.0/21
-                PublicSubnet2CIDR:  10.180.16.0/21
-                PrivateSubnet1CIDR: 10.180.24.0/21
-                PrivateSubnet2CIDR: 10.180.32.0/21
+                PublicSubnet1CIDR:  10.180.1.0/24
+                PublicSubnet2CIDR:  10.180.2.0/24
+                PrivateSubnet1CIDR: 10.180.10.0/24
+                PrivateSubnet2CIDR: 10.180.11.0/24
+                RDSPrivateSubnet1CIDR: 10.180.20.0/24
+                RDSPrivateSubnet2CIDR: 10.180.21.0/24
 
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/security-groups.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/security-groups.yaml
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
 
+    RDS:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/rds.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAtt VPC.Outputs.VPC
+                MasterDBUsername: cyglass
+                MasterDBPassword: password
+                DatabaseInstanceType: db.r3.large
+                DatabaseSubnets: !GetAtt VPC.Outputs.RDSSubnets
+                SecurityGroups: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/load-balancers.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -49,11 +64,11 @@ Resources:
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/ecs-cluster.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/ecs-cluster.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                InstanceType: t2.large
-                ClusterSize: 4
+                InstanceType: t2.small
+                ClusterSize: 2
                 VPC: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
@@ -61,33 +76,46 @@ Resources:
     ProductService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/product-service/service.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/service.yaml 
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 DesiredCount: 2
-                Listener: !GetAtt ALB.Outputs.Listener 
-                Path: /products
-
-    WebsiteService:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/services/website-service/service.yaml
-            Parameters:
-                VPC: !GetAtt VPC.Outputs.VPC
-                Cluster: !GetAtt ECS.Outputs.Cluster
-                DesiredCount: 2
-                ProductServiceUrl: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
                 Listener: !GetAtt ALB.Outputs.Listener 
                 Path: /
+                
+    PublicEc2Instance:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/ec2.yaml 
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                #VPC: !GetAtt VPC.Outputs.VPC
+                InstanceKeyName: api-staging-us-west-2
+                SubnetId: !GetAtt VPC.Outputs.PublicSubnet1
+                InstanceSecurityGroup: !GetAtt SecurityGroups.Outputs.InstanceSecurityGroup
+                Name: !Join [ "-", [ !Ref "AWS::StackName", "api-public-jump" ] ]
+                PublicIpAddress: true
 
+#    PrivateEc2Instance:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/ec2.yaml 
+#            Parameters:
+#                EnvironmentName: !Ref AWS::StackName
+#                #VPC: !GetAtt VPC.Outputs.VPC
+#                InstanceKeyName: api-staging-us-west-2
+#                SubnetId: !GetAtt VPC.Outputs.PrivateSubnet1
+#                InstanceSecurityGroup: !GetAtt SecurityGroups.Outputs.InstanceSecurityGroup
+#                Name: !Join [ "-", [ !Ref "AWS::StackName", "api-private-jump" ] ]
+#                PublicIpAddress: false
 
 Outputs:
 
     ProductServiceUrl: 
         Description: The URL endpoint for the product service
-        Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
+        Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
 
-    WebsiteServiceUrl: 
-        Description: The URL endpoint for the website service
-        Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
+
+
+

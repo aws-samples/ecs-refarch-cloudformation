@@ -16,24 +16,47 @@ Parameters:
         Default: 10.192.0.0/16
 
     PublicSubnet1CIDR:
-        Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+        Description: Please enter the IP range (CIDR notation) for the VPC public subnet in the first Availability Zone
         Type: String
         Default: 10.192.10.0/24
 
     PublicSubnet2CIDR:
-        Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+        Description: Please enter the IP range (CIDR notation) for the VPC public subnet in the second Availability Zone
         Type: String
         Default: 10.192.11.0/24
 
     PrivateSubnet1CIDR:
-        Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+        Description: Please enter the IP range (CIDR notation) for the ECS private subnet in the first Availability Zone
         Type: String
         Default: 10.192.20.0/24
 
     PrivateSubnet2CIDR:
-        Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+        Description: Please enter the IP range (CIDR notation) for the ECS private subnet in the second Availability Zone
         Type: String
         Default: 10.192.21.0/24
+        
+# RDS database parameters
+
+    RDSPrivateSubnet1CIDR:
+        Description: Please enter the IP range (CIDR notation) for the RDS private subnet in the first Availability Zone
+        Type: String
+        Default: 10.192.30.0/24
+
+    RDSPrivateSubnet2CIDR:
+        Description: Please enter the IP range (CIDR notation) for the RDS private subnet in the second Availability Zone
+        Type: String
+        Default: 10.192.31.0/24
+        
+#    RDSPrivateSubnet3CIDR:
+#        Description: Please enter the IP range (CIDR notation) for the RDS private subnet in the third Availability Zone
+#        Type: String
+#        Default: 10.192.32.0/24
+#
+#    RDSPrivateSubnet4CIDR:
+#        Description: Please enter the IP range (CIDR notation) for the RDS private subnet in the fourth Availability Zone
+#        Type: String
+#        Default: 10.192.33.0/24
+        
 
 Resources:
 
@@ -43,20 +66,22 @@ Resources:
             CidrBlock: !Ref VpcCIDR
             Tags: 
                 - Key: Name 
-                  Value: !Ref EnvironmentName
+                  Value: !Sub ${EnvironmentName}-api
             
     InternetGateway:
         Type: AWS::EC2::InternetGateway
         Properties:
             Tags:
                 - Key: Name
-                  Value: !Ref EnvironmentName
+                  Value: !Sub ${EnvironmentName}-api
             
     InternetGatewayAttachment:
         Type: AWS::EC2::VPCGatewayAttachment
         Properties:
             InternetGatewayId: !Ref InternetGateway
             VpcId: !Ref VPC
+
+# public VPC subnets
 
     PublicSubnet1: 
         Type: AWS::EC2::Subnet
@@ -67,7 +92,7 @@ Resources:
             MapPublicIpOnLaunch: true
             Tags: 
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
+                  Value: !Sub ${EnvironmentName}-api public subnet (AZ1)
 
     PublicSubnet2: 
         Type: AWS::EC2::Subnet
@@ -78,7 +103,9 @@ Resources:
             MapPublicIpOnLaunch: true
             Tags: 
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
+                  Value: !Sub ${EnvironmentName}-api public subnet (AZ2)
+
+# ECS subnets
 
     PrivateSubnet1: 
         Type: AWS::EC2::Subnet
@@ -89,7 +116,7 @@ Resources:
             MapPublicIpOnLaunch: false
             Tags: 
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
+                  Value: !Sub ${EnvironmentName}-api ECS private (AZ1)
 
     PrivateSubnet2: 
         Type: AWS::EC2::Subnet
@@ -100,7 +127,33 @@ Resources:
             MapPublicIpOnLaunch: false
             Tags: 
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+                  Value: !Sub ${EnvironmentName}-api ECS private (AZ2)
+
+# RDS subnets
+
+    RDSPrivateSubnet1: 
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 0, !GetAZs ]
+            CidrBlock: !Ref RDSPrivateSubnet1CIDR
+            MapPublicIpOnLaunch: false
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName}-api RDS private (AZ1)
+
+    RDSPrivateSubnet2: 
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 1, !GetAZs ]
+            CidrBlock: !Ref RDSPrivateSubnet2CIDR
+            MapPublicIpOnLaunch: false
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName}-api RDS private (AZ2)
+                  
+# NAT
 
     NatGateway1EIP:
         Type: AWS::EC2::EIP
@@ -119,12 +172,19 @@ Resources:
         Properties: 
             AllocationId: !GetAtt NatGateway1EIP.AllocationId
             SubnetId: !Ref PublicSubnet1
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName}-api natGateway public subnet 1            
 
     NatGateway2: 
         Type: AWS::EC2::NatGateway
         Properties:
             AllocationId: !GetAtt NatGateway2EIP.AllocationId
             SubnetId: !Ref PublicSubnet2
+            Tags:
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName}-api natGateway public subnet 2            
+# Routing
 
     PublicRouteTable:
         Type: AWS::EC2::RouteTable
@@ -132,7 +192,7 @@ Resources:
             VpcId: !Ref VPC
             Tags: 
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName} Public Routes
+                  Value: !Sub ${EnvironmentName}-api public VPC routes
 
     DefaultPublicRoute: 
         Type: AWS::EC2::Route
@@ -154,14 +214,14 @@ Resources:
             RouteTableId: !Ref PublicRouteTable
             SubnetId: !Ref PublicSubnet2
     
-
+    # route ECS private subnet 1 to NAT in public subnet 1
     PrivateRouteTable1:
         Type: AWS::EC2::RouteTable
         Properties: 
             VpcId: !Ref VPC
             Tags: 
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName} Private Routes (AZ1)
+                  Value: !Sub ${EnvironmentName}-api private ECS routes (AZ1)
 
     DefaultPrivateRoute1:
         Type: AWS::EC2::Route
@@ -176,13 +236,14 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable1
             SubnetId: !Ref PrivateSubnet1
 
+    # route ECS private subnet 2 to NAT in public subnet 2
     PrivateRouteTable2:
         Type: AWS::EC2::RouteTable
         Properties: 
             VpcId: !Ref VPC
             Tags: 
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName} Private Routes (AZ2)
+                  Value: !Sub ${EnvironmentName}-api private ECS routes (AZ2)
 
     DefaultPrivateRoute2:
         Type: AWS::EC2::Route
@@ -197,6 +258,74 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
+    # route RDS private subnet 1 to ECS in private subnet 1 and 2
+    PrivateRDSRouteTable1:
+        Type: AWS::EC2::RouteTable
+        Properties: 
+            VpcId: !Ref VPC
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName}-api private RDS routes (AZ1)
+
+#    DefaultRDSPrivateRoute1:
+#        Type: AWS::EC2::Route
+#        Properties:
+#            RouteTableId: !Ref PrivateRDSRouteTable1
+#            DestinationCidrBlock: 0.0.0.0/0
+#            NatGatewayId: !Ref NatGateway1
+#
+#    PrivateRDSSubnet1RouteTableAssociation:
+#        Type: AWS::EC2::SubnetRouteTableAssociation
+#        Properties:
+#            RouteTableId: !Ref PrivateRDSRouteTable1
+#            SubnetId: !Ref RDSPrivateSubnet1
+
+    # route RDS private subnet 2 to ECS in private subnet 1 and 2
+    PrivateRDSRouteTable2:
+        Type: AWS::EC2::RouteTable
+        Properties: 
+            VpcId: !Ref VPC
+            Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName}-api private RDS routes (AZ2)    
+
+#    DefaultRDSPrivateRoute2:
+#        Type: AWS::EC2::Route
+#        Properties:
+#            RouteTableId: !Ref PrivateRDSRouteTable2
+#            DestinationCidrBlock: 0.0.0.0/0
+#            NatGatewayId: !Ref NatGateway2
+#
+#    PrivateRDSSubnet2RouteTableAssociation:
+#        Type: AWS::EC2::SubnetRouteTableAssociation
+#        Properties:
+#            RouteTableId: !Ref PrivateRDSRouteTable2
+#            SubnetId: !Ref RDSPrivateSubnet2
+
+# many AWS regions only have 2 or 3 AZs
+#
+#    RDSPrivateSubnet3: 
+#        Type: AWS::EC2::Subnet
+#        Properties:
+#            VpcId: !Ref VPC
+#            AvailabilityZone: !Select [ 2, !GetAZs ]
+#            CidrBlock: !Ref RDSPrivateSubnet3CIDR
+#            MapPublicIpOnLaunch: false
+#            Tags: 
+#                - Key: Name 
+#                  Value: !Sub ${EnvironmentName}-api RDS private (AZ3)
+#
+#    RDSPrivateSubnet4: 
+#        Type: AWS::EC2::Subnet
+#        Properties:
+#            VpcId: !Ref VPC
+#            AvailabilityZone: !Select [ 3, !GetAZs ]
+#            CidrBlock: !Ref RDSPrivateSubnet4CIDR
+#            MapPublicIpOnLaunch: false
+#            Tags: 
+#                - Key: Name 
+#                  Value: !Sub ${EnvironmentName}-api RDS private (AZ4)
+
 Outputs: 
 
     VPC: 
@@ -210,6 +339,10 @@ Outputs:
     PrivateSubnets:
         Description: A list of the private subnets
         Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ]]
+
+    RDSSubnets:
+        Description: A list of the RDS subnets
+        Value: !Join [ ",", [ !Ref RDSPrivateSubnet1, !Ref RDSPrivateSubnet2 ]]
 
     PublicSubnet1:
         Description: A reference to the public subnet in the 1st Availability Zone
@@ -226,3 +359,12 @@ Outputs:
     PrivateSubnet2: 
         Description: A reference to the private subnet in the 2nd Availability Zone
         Value: !Ref PrivateSubnet2
+        
+    RDSPrivateSubnet1: 
+        Description: A reference to the RDS private subnet in the 1st Availability Zone
+        Value: !Ref RDSPrivateSubnet1
+        
+    RDSPrivateSubnet2: 
+        Description: A reference to the RDS private subnet in the 2nd Availability Zone
+        Value: !Ref RDSPrivateSubnet2   
+

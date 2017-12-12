@@ -1,0 +1,14 @@
+[
+  {
+    "ParameterKey": "VPC",
+    "ParameterValue": "vpc-c63ed9bf"
+  }, 
+  {
+    "ParameterKey": "SecurityGroups",
+    "ParameterValue": "sg-3dc06c41"
+  }, 
+  {
+    "ParameterKey": "DatabaseSubnets",
+    "ParameterValue": "subnet-100a4858,subnet-079ebd61"
+  }
+]
