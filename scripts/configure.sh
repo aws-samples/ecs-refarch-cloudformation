@@ -3,18 +3,10 @@
 # This script will configure an "environment" file with the correct
 # environment variables the rest of the scripts will use
 
-SCRIPT_LABEL=$0
-log() {
- tmpd=`date "+%F %H:%M:%S"`
- tmp="$tmpd [$SCRIPT_LABEL] $1"
- #echo $tmp >> $LOG
- echo $tmp
-}
-
 error() {
- log "ERROR $@"
- #log "$@"
- exit 1
+    echo "ERROR: $1"
+    usage
+    exit 1;	
 }
 
 usage() {
@@ -22,19 +14,19 @@ cat << EOF
 usage: $0 options
 
 This script will generate an environment file for use in configuring a deploy of the API system.
-
+ 
 OPTIONS:
    -h      Show this message
    -p      (Required) AWS profile
    -r      (Required) AWS region (e.g. us-west-2)
    -e      (Required) Environment name (e.g. staging)
    -k      (Required) Directory containing the SSH keys for the deployment
-
+   -b      (Required) Path and filename of API build JAR file
 EOF
 }
 
 # parse command line options
-while getopts 'hp:r:e:k:' flag; do
+while getopts 'hp:r:e:k:b:' flag; do
   case "${flag}" in
     h) usage
        exit 1 ;;
@@ -42,6 +34,7 @@ while getopts 'hp:r:e:k:' flag; do
     r) AWS_REGION="${OPTARG}" ;;
     e) ENV_NAME="${OPTARG}" ;;
     k) SSH_KEY_DIR="${OPTARG}" ;;
+    b) api_build_jar="${OPTARG}" ;;
     *) echo "Unexpected option ${flag}"
        usage
        exit 1;;
@@ -50,27 +43,27 @@ done
 
 # validate input
 if [[ $AWS_PROFILE == "" ]]; then
-    echo "ERROR: AWS profile is a required parameter with the -p option."
-    usage
-    exit 1;
+	error "AWS profile is a required parameter with the -p option."
 fi
 # validate input
 if [[ $AWS_REGION == "" ]]; then
-    echo "ERROR: AWS region is a required parameter with the -r option."
-    usage
-    exit 1;
+    error "AWS region is a required parameter with the -r option."
 fi
 # validate input
 if [[ $ENV_NAME == "" ]]; then
-    echo "ERROR: Environment name is a required parameter with the -e option."
-    usage
-    exit 1;
+    error "Environment name is a required parameter with the -e option."
 fi
 # validate input
 if [[ $SSH_KEY_DIR == "" ]]; then
-    echo "ERROR: SSH key directory is a required parameter with the -k option."
-    usage
-    exit 1;
+    error "SSH key directory is a required parameter with the -k option."
+fi
+# validate input
+if [[ $api_build_jar == "" ]]; then
+    error "API build JAR filespec is a required parameter with the -b option."
+fi
+
+if [ ! -f $api_build_jar ]; then
+    error "API build JAR file not found, please specify full path with the -b option: $api_build_jar"
 fi
 
 getExportValue() {
@@ -78,69 +71,74 @@ getExportValue() {
 	if (( $? > 0 )) ; then error "unable to call AWS CLI"; fi
 }
 
-# get api_public_jump_public_ip
-getExportValue "$ENV_NAME-api-public-jump-PublicIpAddress"
-api_public_jump_public_ip=$RETVAL
-log "found api_public_jump_public_ip=$api_public_jump_public_ip"
-
 #get api_public_jump_key_pem=$HOME/.ssh/aws/api-staging-us-west-2.pem
 getExportValue "$ENV_NAME-api-public-jump-InstanceKeyName"
 api_public_jump_key_pem="$SSH_KEY_DIR/$RETVAL.pem"
-log "found api_public_jump_key_pem=$api_public_jump_key_pem"
-
 if [ ! -f $api_public_jump_key_pem ]; then
     error "SSH key file not found, please specify containing directory: $api_public_jump_key_pem"
 fi
 
-#get api_private_jump_private_ip=10.180.10.101
-getExportValue "$ENV_NAME-api-private-jump-PrivateIpAddress"
-api_private_jump_private_ip=$RETVAL
-log "found api_private_jump_private_ip=$api_private_jump_private_ip"
-
-#get api_private_jump_key_pem=$HOME/.ssh/aws/api-staging-us-west-2-private.pem
-getExportValue "$ENV_NAME-api-private-jump-InstanceKeyName"
-api_private_jump_key_pem="$SSH_KEY_DIR/$RETVAL.pem"
-log "found api_private_jump_key_pem=$api_private_jump_key_pem"
-
-if [ ! -f $api_private_jump_key_pem ]; then
-    error "SSH key file not found, please specify containing directory: $api_private_jump_key_pem"
+# get api_public_jump_public_ip
+getExportValue "$ENV_NAME-api-public-jump-PublicIpAddress"
+api_public_jump_public_ip=$RETVAL
+if [[ $api_public_jump_public_ip == "" ]]; then
+    error "Unable to find the public IP address on the public jump box, was expecting CF export with name: '$ENV_NAME-api-public-jump-PublicIpAddress'"
 fi
 
 #get staging-JDBCConnectionString
 getExportValue "$ENV_NAME-JDBCConnectionString"
 api_rds_jdbc_string=$RETVAL
-log "found api_rds_jdbc_string=$api_rds_jdbc_string"
+if [[ $api_rds_jdbc_string == "" ]]; then
+    error "Unable to find the RDS JDBC string, was expecting CF export with name: '$ENV_NAME-JDBCConnectionString'"
+fi
 
 #get staging-RDSClusterAddress
 getExportValue "$ENV_NAME-RDSClusterAddress"
 api_rds_cluster_address=$RETVAL
-log "found api_rds_cluster_address=$api_rds_cluster_address"
+if [[ $api_rds_cluster_address == "" ]]; then
+    error "Unable to find the RDS cluster address, was expecting CF export with name: '$ENV_NAME-RDSClusterAddress'"
+fi
 
 #get staging-RDSClusterPort
 getExportValue "$ENV_NAME-RDSClusterPort"
 api_rds_cluster_port=$RETVAL
-log "found api_rds_cluster_address=$api_rds_cluster_port"
+if [[ $api_rds_cluster_port == "" ]]; then
+    error "Unable to find the RDS cluster port, was expecting CF export with name: '$ENV_NAME-RDSClusterPort'"
+fi
 
 # output environment
 echo "# Environment file - autogenerated by build-script-environment.sh" > environment
 echo "#" >> environment
 echo "# SSH command to public jump:" >> environment
-echo "#   ssh -i $api_public_jump_key_pem ubuntu@$api_public_jump_public_ip" >> environment
+echo "#   ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $api_public_jump_key_pem ubuntu@$api_public_jump_public_ip" >> environment
 echo "#" >> environment
-echo "# SSH command to private jump (after key installation):" >> environment
-echo "#   ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $api_public_jump_key_pem ubuntu@$api_public_jump_public_ip nc $api_private_jump_private_ip 22\"  -i $api_private_jump_key_pem ubuntu@$api_private_jump_private_ip" >> environment
+echo "# RDS command for root:" >> environment
+echo "#   mysql -u cyglass -ppassword -h $api_rds_cluster_address -P $api_rds_cluster_port " >> environment
 echo "#" >> environment
+echo "# RDS command for user:" >> environment
+echo "#   mysql -u cyglassUser -pcyglassPassword -h $api_rds_cluster_address -P $api_rds_cluster_port $api_environment_name" >> environment
+echo "#" >> environment
+
+#echo "# SSH command to private jump (after key installation):" >> environment
+#echo "#   ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $api_public_jump_key_pem ubuntu@$api_public_jump_public_ip nc $api_private_jump_private_ip 22\"  -i $api_private_jump_key_pem ubuntu@$api_private_jump_private_ip" >> environment
+#echo "#" >> environment
 echo "#" >> environment
 echo "api_public_jump_public_ip=$api_public_jump_public_ip" >> environment
 echo "api_public_jump_key_pem=$api_public_jump_key_pem" >> environment
-echo "api_private_jump_private_ip=$api_private_jump_private_ip" >> environment
-echo "api_private_jump_key_pem=$api_private_jump_key_pem" >> environment
+#echo "api_private_jump_private_ip=$api_private_jump_private_ip" >> environment
+#echo "api_private_jump_key_pem=$api_private_jump_key_pem" >> environment
 echo "api_rds_jdbc_string=$api_rds_jdbc_string" >> environment
 echo "api_rds_cluster_address=$api_rds_cluster_address" >> environment
 echo "api_rds_cluster_port=$api_rds_cluster_port" >> environment
+echo "api_build_jar=$api_build_jar" >> environment
+echo "api_environment_name=$ENV_NAME" >> environment
+echo "aws_profile=$AWS_PROFILE" >> environment
+echo "aws_region=$AWS_REGION" >> environment
 
-log "completed configuration, wrote environment file:"
+echo "completed configuration, wrote environment file:"
 cat environment
+echo
+echo "configuration successful"
 
 
 

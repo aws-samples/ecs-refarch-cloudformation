@@ -106,24 +106,29 @@ Outputs:
         Description: Endpoint address for cluster
         Value: !GetAtt RDSCluster.Endpoint.Address
         Export:
-            Name: RDSClusterAddress
             Name: !Join [ "-", [ !Ref EnvironmentName, "RDSClusterAddress" ] ]        
   
     RDSClusterPort:
         Description: Endpoint port for cluster
         Value: !GetAtt RDSCluster.Endpoint.Port
         Export:
-            Name: RDSClusterPort
             Name: !Join [ "-", [ !Ref EnvironmentName, "RDSClusterPort" ] ]
   
     JDBCConnectionString:
         Description: Host JDBC endpoint for JDBC
         Value: !Join [ "", [ "jdbc:mysql://",  !GetAtt RDSCluster.Endpoint.Address ,  !GetAtt RDSCluster.Endpoint.Port ] ]
         Export:
-            Name: JDBCConnectionString
             Name: !Join [ "-", [ !Ref EnvironmentName, "JDBCConnectionString" ] ]
 
-  
-  
-    
+#    MasterDBUsername:
+#        Description: Master DB username (root user)
+#        Value: !Ref MasterDBUsername
+#        Export:
+#            Name: !Join [ "-", [ !Ref EnvironmentName, "MasterDBUsername" ] ]
+#  
+#    MasterDBPassword:
+#        Description: Master DB password (root user)
+#        Value: !Ref MasterDBPassword
+#        Export:
+#            Name: !Join [ "-", [ !Ref EnvironmentName, "MasterDBPassword" ] ]
     
