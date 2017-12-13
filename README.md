@@ -17,7 +17,7 @@ Read all these instructions before beginning deploy. This setup utilizes a combi
 
 ## Notes
 
-* The region that you specify on the CLI is the region the system will be deployed into. Be wary of what you specify for the `--region` argument to the CLI, **or** what you've set as your default region in your `~/.aws` directory.
+* The region that you specify on the CLI (via the `--region` argument) is the region the API system will be deployed into. Be wary of what you specify for the `--region` argument, **or** what you've set as your default region in your `~/.aws` directory.
 * The templates include the creation of two EC2 jump boxes for use during configuration only. 
 * The master template (`master.yml`) specifies *all* parameters for the nested templates and the resources it creates. You should inspect these parameters and adjust as needed. For example, the RDS master username and password might need to be changed (and also adjusted in the configuration scripts).
 * Credentials for the RDS database may need to be manually synchronized between the CF templates and init scripts. This is a **TODO** improvement item for future work.
