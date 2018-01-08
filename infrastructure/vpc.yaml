@@ -35,6 +35,17 @@ Parameters:
         Type: String
         Default: 10.192.21.0/24
 
+    PrivateDataSubnet1CIDR:
+        Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+        Type: String
+        Default: 10.192.30.0/24
+
+    PrivateDataSubnet2CIDR:
+        Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+        Type: String
+        Default: 10.192.31.0/24
+
+
 Resources:
 
     VPC: 
@@ -101,6 +112,31 @@ Resources:
             Tags: 
                 - Key: Name 
                   Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+
+    PrivateDataSubnet1:
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 0, !GetAZs ]
+            CidrBlock: !Ref PrivateDataSubnet1CIDR
+            MapPublicIpOnLaunch: false
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
+
+    PrivateDataSubnet2DB:
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 1, !GetAZs ]
+            CidrBlock: !Ref PrivateDataSubnet2CIDR
+            MapPublicIpOnLaunch: false
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+
+
+
 
     NatGateway1EIP:
         Type: AWS::EC2::EIP
@@ -197,6 +233,47 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
+    PrivateDataRouteTable1:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId: !Ref VPC
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Private Routes (AZ2)
+
+    DefaultPrivateDataRoute1:
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !Ref PrivateDataRouteTable1
+            DestinationCidrBlock: 0.0.0.0/0
+
+    PrivateDataSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref PrivateDataRouteTable1
+            SubnetId: !Ref PrivateDataSubnet1
+
+
+    PrivateDataRouteTable2:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId: !Ref VPC
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Private Routes (AZ2)
+
+    DefaultPrivateDataRoute2:
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !Ref PrivateDataRouteTable2
+            DestinationCidrBlock: 0.0.0.0/0
+
+    PrivateDataSubnet2RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref PrivateDataRouteTable2
+            SubnetId: !Ref PrivateDataSubnet2
+
 Outputs: 
 
     VPC: 
@@ -226,3 +303,17 @@ Outputs:
     PrivateSubnet2: 
         Description: A reference to the private subnet in the 2nd Availability Zone
         Value: !Ref PrivateSubnet2
+
+    PrivateDataSubnet1:
+        Description: A refenrence to the private DB subnet in the 1st Availability Zone
+        Value: !Ref PrivateDataSubnet1
+
+    PrivateDataSubnet2:
+        Description: A refenrence to the private DB subnet in the 2nd Availability Zone
+        Value: !Ref PrivateDataSubnet2
+
+    PrivateDataSubnets:
+        Description: A list of the DB private subnets
+        Value: !Join [ ",", [ !Ref PrivateDataSubnet1, !Ref PrivateDataSubnet2 ]]
+
+
