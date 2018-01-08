@@ -311,3 +311,9 @@ Outputs:
     PrivateDataSubnet2:
         Description: A refenrence to the private DB subnet in the 2nd Availability Zone
         Value: !Ref PrivateDataSubnet2
+
+    PrivateDataSubnets:
+        Description: A list of the DB private subnets
+        Value: !Join [ ",", [ !Ref PrivateDataSubnet1, !Ref PrivateDataSubnet2 ]]
+
+
