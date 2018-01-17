@@ -1,5 +1,5 @@
 Description: >
-    This is an example of a long running ECS service that serves a JSON API of products.
+    This is the CyGlass API running as an ECS service.
 
 Parameters: 
 
@@ -36,21 +36,21 @@ Resources:
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
             LoadBalancers: 
-                - ContainerName: "product-service"
-                  ContainerPort: 8001
+                - ContainerName: "api-service"
+                  ContainerPort: 8080
                   TargetGroupArn: !Ref TargetGroup
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Family: product-service
+            Family: api-service
             ContainerDefinitions:
-                - Name: product-service
+                - Name: api-service
                   Essential: true
-                  Image: 275396840892.dkr.ecr.us-east-1.amazonaws.com/ecs-refarch-cloudformation/product-service:1.0.0
+                  Image: 347501087758.dkr.ecr.us-west-2.amazonaws.com/api-staging:latest
                   Memory: 128
                   PortMappings:
-                    - ContainerPort: 8001
+                    - ContainerPort: 8080
                   LogConfiguration:
                     LogDriver: awslogs
                     Options:
@@ -67,7 +67,7 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
             VpcId: !Ref VPC
-            Port: 80
+            Port: 8080
             Protocol: HTTP
             Matcher: 
                 HttpCode: 200-299

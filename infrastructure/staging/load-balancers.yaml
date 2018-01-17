@@ -32,26 +32,34 @@ Resources:
             Tags: 
                 - Key: Name
                   Value: !Ref EnvironmentName
+                - Key: BillByOrg
+                  Value: CyGlass
+                - Key: Company
+                  Value: CyGlass
+                - Key: Customer
+                  Value: DEV
 
     LoadBalancerListener:
         Type: AWS::ElasticLoadBalancingV2::Listener
         Properties:
             LoadBalancerArn: !Ref LoadBalancer
-            Port: 80
-            Protocol: HTTP 
+            Certificates:
+                - CertificateArn: arn:aws:iam::347501087758:server-certificate/cloudfront/cyglass-wildcard-2017
+            Port: 443
+            Protocol: HTTPS
             DefaultActions: 
                 - Type: forward
                   TargetGroupArn: !Ref DefaultTargetGroup
     
     # We define a default target group here, as this is a mandatory Parameters
-    # when creating an Application Load Balancer Listener. This is not used, instead
+    # when creating an Application Load Balancer Listener. This is not used when ECS is configured, instead
     # a target group is created per-service in each service template (../services/*)
     DefaultTargetGroup:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
             Name: !Sub ${EnvironmentName}-default
             VpcId: !Ref VPC
-            Port: 80
+            Port: 8080
             Protocol: HTTP
            
 Outputs:

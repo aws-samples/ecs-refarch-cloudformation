@@ -1,0 +1,11 @@
+
+aws cloudformation validate-template --template-body file://infrastructure/rds.yaml
+
+aws --profile jay --region us-west-2 cloudformation create-stack  --stack-name staging-rds --template-body file://infrastructure/rds.yaml --parameters file://params.json --capabilities CAPABILITY_NAMED_IAM
+aws --profile jay --region us-west-2 cloudformation create-stack  --stack-name staging --capabilities CAPABILITY_NAMED_IAM --template-body file://master.yaml
+
+
+aws --profile jay --region us-west-2 cloudformation delete-stack --stack-name staging-rds
+
+
+AvailabilityZones: !Join [ "|", [ !Select [ 0, !GetAZs ] , !Select [ 0, !GetAZs ] ]]

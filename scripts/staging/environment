@@ -1,0 +1,7 @@
+# environment vars
+API_JUMP=13.59.97.218
+API_NODE_1=10.180.10.63
+API_NODE_2=10.180.11.189
+SSH_KEY=/home/jay/.ssh/aws/cyglass-api-ohio.pem
+API_DIR=/home/jay/git/cyglass-api
+JAVA_TARBALL=/opt/serverjre-9.0.1_linux-x64_bin.tar.gz
