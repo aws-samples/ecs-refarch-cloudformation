@@ -67,6 +67,12 @@ Resources:
             Tags: 
                 - Key: Name 
                   Value: !Sub ${EnvironmentName}-api
+                - Key: BillByOrg
+                  Value: CyGlass
+                - Key: Company
+                  Value: CyGlass
+                - Key: Customer
+                  Value: DEV
             
     InternetGateway:
         Type: AWS::EC2::InternetGateway
@@ -74,6 +80,12 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-api
+                - Key: BillByOrg
+                  Value: CyGlass
+                - Key: Company
+                  Value: CyGlass
+                - Key: Customer
+                  Value: DEV
             
     InternetGatewayAttachment:
         Type: AWS::EC2::VPCGatewayAttachment
@@ -174,7 +186,13 @@ Resources:
             SubnetId: !Ref PublicSubnet1
             Tags: 
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName}-api natGateway public subnet 1            
+                  Value: !Sub ${EnvironmentName}-api natGateway public subnet 1
+                - Key: BillByOrg
+                  Value: CyGlass
+                - Key: Company
+                  Value: CyGlass
+                - Key: Customer
+                  Value: DEV
 
     NatGateway2: 
         Type: AWS::EC2::NatGateway
@@ -183,7 +201,13 @@ Resources:
             SubnetId: !Ref PublicSubnet2
             Tags:
                 - Key: Name 
-                  Value: !Sub ${EnvironmentName}-api natGateway public subnet 2            
+                  Value: !Sub ${EnvironmentName}-api natGateway public subnet 2
+                - Key: BillByOrg
+                  Value: CyGlass
+                - Key: Company
+                  Value: CyGlass
+                - Key: Customer
+                  Value: DEV
 # Routing
 
     PublicRouteTable:

@@ -92,6 +92,12 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Ref Name
+                - Key: BillByOrg
+                  Value: CyGlass
+                - Key: Company
+                  Value: CyGlass
+                - Key: Customer
+                  Value: DEV
                   
 Outputs:
 

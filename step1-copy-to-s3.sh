@@ -10,7 +10,6 @@ ARGUMENTS:
 
   <aws_profile>  name of the profile to use for AWS CLI commands
 
-    
 EOF
 }
 

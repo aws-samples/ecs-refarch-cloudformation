@@ -1,0 +1,160 @@
+Description: >
+
+    This template deploys a VPC, with a pair of public and private subnets spread 
+    across two Availabilty Zones. It deploys an Internet Gateway, with a default 
+    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
+    and default routes for them in the private subnets.
+
+    It then deploys a highly available ECS cluster using an AutoScaling Group, with 
+    ECS hosts distributed across multiple Availability Zones. 
+
+    Finally, it deploys a pair of example ECS services from containers published in 
+    Amazon EC2 Container Registry (Amazon ECR).
+
+    Last Modified: 22nd September 2016
+    Author: Paul Maddox <pmaddox@amazon.com>
+    Updated by Jay Houghton 2018
+
+
+Parameters:
+    
+    Ec2KeyPairName:
+        Description: Name of EC2 SSH key pair name to use for instances (region specific)
+        Type: String
+        Default: cyglass-api-ohio
+#       Default: api-staging-us-west-2
+
+Resources:
+
+    VPC:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/vpc.yaml
+            Parameters:
+                EnvironmentName:    !Ref AWS::StackName
+                VpcCIDR:            10.180.0.0/16
+                PublicSubnet1CIDR:  10.180.1.0/24
+                PublicSubnet2CIDR:  10.180.2.0/24
+                PrivateSubnet1CIDR: 10.180.10.0/24
+                PrivateSubnet2CIDR: 10.180.11.0/24
+                RDSPrivateSubnet1CIDR: 10.180.20.0/24
+                RDSPrivateSubnet2CIDR: 10.180.21.0/24
+
+    SecurityGroups:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/security-groups.yaml
+            Parameters: 
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAtt VPC.Outputs.VPC
+
+    RDS:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/rds.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAtt VPC.Outputs.VPC
+                MasterDBUsername: cyglass
+                MasterDBPassword: password
+                DatabaseInstanceType: db.r3.large
+                DatabaseSubnets: !GetAtt VPC.Outputs.RDSSubnets
+                SecurityGroups: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+
+    ALB:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/load-balancers.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAtt VPC.Outputs.VPC
+                Subnets: !GetAtt VPC.Outputs.PublicSubnets
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+
+#    ECS:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/ecs-cluster.yaml
+#            Parameters:
+#                EnvironmentName: !Ref AWS::StackName
+#                InstanceType: t2.small
+#                ClusterSize: 2
+#                VPC: !GetAtt VPC.Outputs.VPC
+#                SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
+#                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+#
+#    ProductService:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/service.yaml 
+#            Parameters:
+#                VPC: !GetAtt VPC.Outputs.VPC
+#                Cluster: !GetAtt ECS.Outputs.Cluster
+#                DesiredCount: 2
+#                Listener: !GetAtt ALB.Outputs.Listener 
+#                Path: /
+
+    ApiEc2Instance1:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/ec2.yaml 
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                #VPC: !GetAtt VPC.Outputs.VPC
+                InstanceKeyName: !Ref Ec2KeyPairName 
+                SubnetId: !GetAtt VPC.Outputs.PrivateSubnet1
+                InstanceSecurityGroup: !GetAtt SecurityGroups.Outputs.InstanceSecurityGroup
+                Name: !Join [ "-", [ !Ref "AWS::StackName", "api-node-1" ] ]
+                PublicIpAddress: false
+                InstanceType: t2.medium
+                
+    ApiEc2Instance2:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/ec2.yaml 
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                #VPC: !GetAtt VPC.Outputs.VPC
+                InstanceKeyName: !Ref Ec2KeyPairName 
+                SubnetId: !GetAtt VPC.Outputs.PrivateSubnet2
+                InstanceSecurityGroup: !GetAtt SecurityGroups.Outputs.InstanceSecurityGroup
+                Name: !Join [ "-", [ !Ref "AWS::StackName", "api-node-2" ] ]
+                PublicIpAddress: false
+                InstanceType: t2.medium
+
+
+    PublicEc2Instance:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/ec2.yaml 
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                #VPC: !GetAtt VPC.Outputs.VPC
+                InstanceKeyName: !Ref Ec2KeyPairName
+                SubnetId: !GetAtt VPC.Outputs.PublicSubnet1
+                InstanceSecurityGroup: !GetAtt SecurityGroups.Outputs.InstanceSecurityGroup
+                Name: !Join [ "-", [ !Ref "AWS::StackName", "api-public-jump" ] ]
+                PublicIpAddress: true
+
+#    PrivateEc2Instance:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/staging/ec2.yaml 
+#            Parameters:
+#                EnvironmentName: !Ref AWS::StackName
+#                #VPC: !GetAtt VPC.Outputs.VPC
+#                InstanceKeyName: !Ref Ec2KeyPairName
+#                SubnetId: !GetAtt VPC.Outputs.PrivateSubnet1
+#                InstanceSecurityGroup: !GetAtt SecurityGroups.Outputs.InstanceSecurityGroup
+#                Name: !Join [ "-", [ !Ref "AWS::StackName", "api-private-jump" ] ]
+#                PublicIpAddress: false
+
+Outputs:
+
+    ProductServiceUrl: 
+        Description: The URL endpoint for the product service
+        Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
+
+
+
+

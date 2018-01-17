@@ -72,6 +72,12 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-api-cluster
+                - Key: BillByOrg
+                  Value: CyGlass
+                - Key: Company
+                  Value: CyGlass
+                - Key: Customer
+                  Value: DEV
 
 
     RDSPrimaryInstance:
@@ -85,7 +91,7 @@ Resources:
             PubliclyAccessible: false
             Tags:
                 - Key: Name
-                  Value: !Sub ${EnvironmentName}-api-primary    
+                  Value: !Sub ${EnvironmentName}-api-primary 
 
     RDSReplicaInstance:
         Type: AWS::RDS::DBInstance

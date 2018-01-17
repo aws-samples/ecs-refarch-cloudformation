@@ -19,7 +19,7 @@ Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/vpc.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/production/vpc.yaml
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            10.180.0.0/16
@@ -33,7 +33,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/security-groups.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/production/security-groups.yaml
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -41,7 +41,7 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/rds.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/production/rds.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -54,7 +54,7 @@ Resources:
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/load-balancers.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/production/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -64,7 +64,7 @@ Resources:
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/ecs-cluster.yaml
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/production/ecs-cluster.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 InstanceType: t2.small
@@ -76,7 +76,7 @@ Resources:
     ProductService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/service.yaml 
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/production/service.yaml 
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
@@ -87,7 +87,7 @@ Resources:
     PublicEc2Instance:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/ec2.yaml 
+            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/production/ec2.yaml 
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 #VPC: !GetAtt VPC.Outputs.VPC
@@ -100,7 +100,7 @@ Resources:
 #    PrivateEc2Instance:
 #        Type: AWS::CloudFormation::Stack
 #        Properties:
-#            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/ec2.yaml 
+#            TemplateURL: https://s3.us-east-2.amazonaws.com/staging.api.cyglass.com/cloudformation/infrastructure/production/ec2.yaml 
 #            Parameters:
 #                EnvironmentName: !Ref AWS::StackName
 #                #VPC: !GetAtt VPC.Outputs.VPC
