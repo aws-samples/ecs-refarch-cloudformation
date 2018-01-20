@@ -1,5 +1,5 @@
 Description: >
-    This template deploys an ECS cluster to the provided VPC and subnets 
+    This template deploys an ECS cluster to the provided VPC and subnets
     using an Auto Scaling Group
 
 Parameters:
@@ -8,7 +8,7 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
-    InstanceType: 
+    InstanceType:
         Description: Which instance type should we use to build the ECS cluster?
         Type: String
         Default: c4.large
@@ -34,38 +34,46 @@ Mappings:
 
     # These are the latest ECS optimized AMIs as of August 2017:
     #
-    #   amzn-ami-2017.03.f-amazon-ecs-optimized
-    #   ECS agent:    1.14.4
-    #   Docker:       17.03.2-ce
-    #   ecs-init:     1.14.4-1
+    #   amzn-ami-2017.09.d-amazon-ecs-optimized
+    #   ECS agent:    1.16.0
+    #   Docker:       17.06.2-ce
+    #   ecs-init:     1.16.0-1
     #
     # You can find the latest available on this page of our documentation:
     # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
-    # (note the AMI identifier is region specific) 
+    # (note the AMI identifier is region specific)
 
     AWSRegionToAMI:
         us-east-2:
-            AMI: ami-1c002379
+            AMI: ami-58f5db3d
         us-east-1:
-            AMI: ami-9eb4b1e5
+            AMI: ami-fad25980
         us-west-2:
-            AMI: ami-1d668865
+            AMI: ami-7114c909
         us-west-1:
-            AMI: ami-4a2c192a
+            AMI: ami-62e0d802
+        eu-west-3:
+            AMI: ami-d179ceac
         eu-west-2:
-            AMI: ami-cb1101af
+            AMI: ami-dbfee1bf
         eu-west-1:
-            AMI: ami-8fcc32f6
+            AMI: ami-4cbe0935
         eu-central-1:
-            AMI: ami-0460cb6b
+            AMI: ami-05991b6a
+        ap-northeast-2:
+            AMI: ami-7267c01c
         ap-northeast-1:
-            AMI: ami-b743bed1
+            AMI: ami-56bd0030
         ap-southeast-2:
-            AMI: ami-c1a6bda2
+            AMI: ami-14b55f76
         ap-southeast-1:
-            AMI: ami-9d1f7efe
+            AMI: ami-1bdc8b78
         ca-central-1:
-            AMI: ami-b677c9d2
+            AMI: ami-918b30f5
+        ap-south-1:
+            AMI: ami-e4d29c8b
+        sa-east-1:
+            AMI: ami-d596d2b9
 
 Resources:
 
@@ -76,18 +84,18 @@ Resources:
 
     ECSAutoScalingGroup:
         Type: AWS::AutoScaling::AutoScalingGroup
-        Properties: 
+        Properties:
             VPCZoneIdentifier: !Ref Subnets
             LaunchConfigurationName: !Ref ECSLaunchConfiguration
             MinSize: !Ref ClusterSize
             MaxSize: !Ref ClusterSize
             DesiredCapacity: !Ref ClusterSize
-            Tags: 
+            Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName} ECS host
                   PropagateAtLaunch: true
         CreationPolicy:
-            ResourceSignal: 
+            ResourceSignal:
                 Timeout: PT15M
         UpdatePolicy:
             AutoScalingRollingUpdate:
@@ -101,16 +109,16 @@ Resources:
                   - AlarmNotification
                   - ScheduledActions
                 WaitOnResourceSignals: true
-        
+
     ECSLaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties:
             ImageId:  !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
             InstanceType: !Ref InstanceType
-            SecurityGroups: 
+            SecurityGroups:
                 - !Ref SecurityGroup
             IamInstanceProfile: !Ref ECSInstanceProfile
-            UserData: 
+            UserData:
                 "Fn::Base64": !Sub |
                     #!/bin/bash
                     yum install -y aws-cfn-bootstrap
@@ -136,13 +144,15 @@ Resources:
                                 [main]
                                 stack=${AWS::StackId}
                                 region=${AWS::Region}
-                        
+
                         "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
                             content: !Sub |
                                 [cfn-auto-reloader-hook]
                                 triggers=post.update
                                 path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init
                                 action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
+
+                    services:
 
                         "/etc/awslogs/awscli.conf":
                             content: !Sub |
@@ -191,12 +201,11 @@ Resources:
                                 log_stream_name = ${ECSCluster}
                                 datetime_format = %Y-%m-%dT%H:%M:%SZ
 
-                    services: 
                         sysvinit:
-                            cfn-hup: 
+                            cfn-hup:
                                 enabled: true
                                 ensureRunning: true
-                                files: 
+                                files:
                                     - /etc/cfn/cfn-hup.conf
                                     - /etc/cfn/hooks.d/cfn-auto-reloader.conf
                             awslogs:
@@ -216,7 +225,7 @@ Resources:
 
     ECSRole:
         Type: AWS::IAM::Role
-        Properties: 
+        Properties:
             Path: /
             RoleName: !Sub ${EnvironmentName}-ECSRole-${AWS::Region}
             AssumeRolePolicyDocument: |
@@ -224,12 +233,12 @@ Resources:
                     "Statement": [{
                         "Action": "sts:AssumeRole",
                         "Effect": "Allow",
-                        "Principal": { 
-                            "Service": "ec2.amazonaws.com" 
+                        "Principal": {
+                            "Service": "ec2.amazonaws.com"
                         }
                     }]
                 }
-            Policies: 
+            Policies:
                 - PolicyName: ecs-service
                   PolicyDocument: |
                     {
@@ -254,11 +263,11 @@ Resources:
                         }]
                     }
 
-    ECSInstanceProfile: 
+    ECSInstanceProfile:
         Type: AWS::IAM::InstanceProfile
         Properties:
             Path: /
-            Roles: 
+            Roles:
                 - !Ref ECSRole
 
 Outputs:
@@ -266,4 +275,3 @@ Outputs:
     Cluster:
         Description: A reference to the ECS cluster
         Value: !Ref ECSCluster
-
