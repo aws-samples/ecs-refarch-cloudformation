@@ -177,7 +177,7 @@ Resources:
                 - - service
                     - !Ref Cluster
                     - !GetAtt Service.Name
-            RoleARN: !Ref AutoScalingRoleArn
+            RoleARN: !Ref AutoScalingRole.Arn
             ScalableDimension: ecs:service:DesiredCount
             ServiceNamespace: ecs
 
