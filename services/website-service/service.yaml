@@ -35,6 +35,10 @@ Parameters:
         Type: String
         Default: /
 
+    ECSServiceAutoScalingRoleARN:
+        Description: The ECS service auto scaling role ARN
+        Type: String
+
 Resources:
 
     Service: 
@@ -141,32 +145,6 @@ Resources:
                         }]
                     }
 
-    AutoScalingRole:
-        Type: AWS::IAM::Role
-        Properties:
-            AssumeRolePolicyDocument:
-                Version: '2012-10-17'
-                Statement:
-                    Action:
-                    - 'sts:AssumeRole'
-                    Effect: Allow
-                    Principal:
-                        Service:
-                        - application-autoscaling.amazonaws.com
-            Path: /
-            Policies:
-            - PolicyName: ecs-service-autoscaling
-              PolicyDocument:
-                  Statement:
-                      Effect: Allow
-                      Action:
-                      - application-autoscaling:*
-                      - cloudwatch:DescribeAlarms
-                      - cloudwatch:PutMetricAlarm
-                      - ecs:DescribeServices
-                      - ecs:UpdateService
-                      Resource: "*"
-
     ServiceScalableTarget:
         Type: "AWS::ApplicationAutoScaling::ScalableTarget"
         Properties:
@@ -177,7 +155,7 @@ Resources:
                 - - service
                   - !Ref Cluster
                   - !GetAtt Service.Name
-            RoleARN: !GetAtt AutoScalingRole.Arn
+            RoleARN: !GetAtt ECSServiceAutoScalingRoleARN
             ScalableDimension: ecs:service:DesiredCount
             ServiceNamespace: ecs
 
