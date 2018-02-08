@@ -156,16 +156,16 @@ Resources:
             Path: /
             Policies:
             - PolicyName: ecs-service-autoscaling
-                PolicyDocument:
-                    Statement:
-                        Effect: Allow
-                        Action:
-                        - application-autoscaling:*
-                        - cloudwatch:DescribeAlarms
-                        - cloudwatch:PutMetricAlarm
-                        - ecs:DescribeServices
-                        - ecs:UpdateService
-                        Resource: "*"
+              PolicyDocument:
+                  Statement:
+                      Effect: Allow
+                      Action:
+                      - application-autoscaling:*
+                      - cloudwatch:DescribeAlarms
+                      - cloudwatch:PutMetricAlarm
+                      - ecs:DescribeServices
+                      - ecs:UpdateService
+                      Resource: "*"
 
     ServiceScalableTarget:
         Type: "AWS::ApplicationAutoScaling::ScalableTarget"
@@ -175,9 +175,9 @@ Resources:
             ResourceId: !Join
                 - /
                 - - service
-                    - !Ref Cluster
-                    - !GetAtt Service.Name
-            RoleARN: !Ref AutoScalingRole.Arn
+                  - !Ref Cluster
+                  - !GetAtt Service.Name
+            RoleARN: !GetAtt AutoScalingRole.Arn
             ScalableDimension: ecs:service:DesiredCount
             ServiceNamespace: ecs
 
@@ -193,7 +193,7 @@ Resources:
                 MetricAggregationType: Average
                 StepAdjustments:
                 - MetricIntervalLowerBound: 0
-                    ScalingAdjustment: 1
+                  ScalingAdjustment: 1
 
     ServiceScaleInPolicy:
         Type : "AWS::ApplicationAutoScaling::ScalingPolicy"
@@ -207,7 +207,7 @@ Resources:
                 MetricAggregationType: Average
                 StepAdjustments:
                 - MetricIntervalUpperBound: 0
-                    ScalingAdjustment: -1
+                  ScalingAdjustment: -1
 
     CPUScaleOutAlarm:
         Type: AWS::CloudWatch::Alarm
@@ -218,9 +218,9 @@ Resources:
             MetricName: CPUUtilization
             Dimensions:
             - Name: ClusterName
-                Value: !Ref Cluster
+              Value: !Ref Cluster
             - Name: ServiceName
-                Value: !GetAtt Service.Name
+              Value: !GetAtt Service.Name
             Statistic: Maximum
             Period: '60'
             EvaluationPeriods: '3'
@@ -238,9 +238,9 @@ Resources:
             MetricName: CPUUtilization
             Dimensions:
             - Name: ClusterName
-                Value: !Ref Cluster
+              Value: !Ref Cluster
             - Name: ServiceName
-                Value: !GetAtt Service.Name
+              Value: !GetAtt Service.Name
             Statistic: Maximum
             Period: '60'
             EvaluationPeriods: '10'
