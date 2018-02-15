@@ -153,8 +153,6 @@ Resources:
                                 path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init
                                 action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
 
-                    services:
-
                         "/etc/awslogs/awscli.conf":
                             content: !Sub |
                                 [plugins]
@@ -202,6 +200,7 @@ Resources:
                                 log_stream_name = ${ECSCluster}
                                 datetime_format = %Y-%m-%dT%H:%M:%SZ
 
+                    services:
                         sysvinit:
                             cfn-hup:
                                 enabled: true
