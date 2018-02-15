@@ -305,8 +305,38 @@ Resources:
             Roles:
                 - !Ref ECSRole
 
+    ECSServiceAutoScalingRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    Action:
+                    - 'sts:AssumeRole'
+                    Effect: Allow
+                    Principal:
+                        Service:
+                        - application-autoscaling.amazonaws.com
+            Path: /
+            Policies:
+            - PolicyName: ecs-service-autoscaling
+              PolicyDocument:
+                  Statement:
+                      Effect: Allow
+                      Action:
+                      - application-autoscaling:*
+                      - cloudwatch:DescribeAlarms
+                      - cloudwatch:PutMetricAlarm
+                      - ecs:DescribeServices
+                      - ecs:UpdateService
+                      Resource: "*"
+
 Outputs:
 
     Cluster:
         Description: A reference to the ECS cluster
         Value: !Ref ECSCluster
+
+    ECSServiceAutoScalingRole:
+        Description: A reference to ECS service auto scaling role
+        Value: !Ref ECSServiceAutoScalingRole

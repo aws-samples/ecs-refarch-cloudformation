@@ -80,6 +80,7 @@ Resources:
                 ProductServiceUrl: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
                 Listener: !GetAtt ALB.Outputs.Listener 
                 Path: /
+                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole.Arn
 
 
 Outputs:

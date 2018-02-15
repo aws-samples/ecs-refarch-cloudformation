@@ -17,6 +17,11 @@ Parameters:
         Type: Number
         Default: 2
 
+    MaxCount:
+        Description: Maximum number of instances of this task we can run across our cluster
+        Type: Number
+        Default: 3
+
     ProductServiceUrl:
         Description: The URL of the Product Service (used to fetch product information)
         Type: String
@@ -29,6 +34,10 @@ Parameters:
         Description: The path to register with the Application Load Balancer
         Type: String
         Default: /
+
+    ECSServiceAutoScalingRoleARN:
+        Description: The ECS service auto scaling role ARN
+        Type: String
 
 Resources:
 
@@ -103,7 +112,7 @@ Resources:
     # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_IAM_role.html
     ServiceRole: 
         Type: AWS::IAM::Role
-        Properties: 
+        Properties:
             RoleName: !Sub ecs-service-${AWS::StackName}
             Path: /
             AssumeRolePolicyDocument: |
@@ -114,9 +123,9 @@ Resources:
                         "Action": [ "sts:AssumeRole" ]
                     }]
                 }
-            Policies: 
+            Policies:
                 - PolicyName: !Sub ecs-service-${AWS::StackName}
-                  PolicyDocument: 
+                  PolicyDocument:
                     {
                         "Version": "2012-10-17",
                         "Statement": [{
@@ -136,3 +145,84 @@ Resources:
                         }]
                     }
 
+    ServiceScalableTarget:
+        Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+        Properties:
+            MaxCapacity: !Ref MaxCount
+            MinCapacity: !Ref DesiredCount
+            ResourceId: !Join
+                - /
+                - - service
+                  - !Ref Cluster
+                  - !GetAtt Service.Name
+            RoleARN: !GetAtt ECSServiceAutoScalingRoleARN
+            ScalableDimension: ecs:service:DesiredCount
+            ServiceNamespace: ecs
+
+    ServiceScaleOutPolicy:
+        Type : "AWS::ApplicationAutoScaling::ScalingPolicy"
+        Properties:
+            PolicyName: ServiceScaleOutPolicy
+            PolicyType: StepScaling
+            ScalingTargetId: !Ref ServiceScalableTarget
+            StepScalingPolicyConfiguration:
+                AdjustmentType: ChangeInCapacity
+                Cooldown: 1800
+                MetricAggregationType: Average
+                StepAdjustments:
+                - MetricIntervalLowerBound: 0
+                  ScalingAdjustment: 1
+
+    ServiceScaleInPolicy:
+        Type : "AWS::ApplicationAutoScaling::ScalingPolicy"
+        Properties:
+            PolicyName: ServiceScaleInPolicy
+            PolicyType: StepScaling
+            ScalingTargetId: !Ref ServiceScalableTarget
+            StepScalingPolicyConfiguration:
+                AdjustmentType: ChangeInCapacity
+                Cooldown: 1800
+                MetricAggregationType: Average
+                StepAdjustments:
+                - MetricIntervalUpperBound: 0
+                  ScalingAdjustment: -1
+
+    CPUScaleOutAlarm:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+            AlarmName: CPU utilization greater than 90%
+            AlarmDescription: Alarm if cpu utilization greater than 90% of reserved cpu
+            Namespace: AWS/ECS
+            MetricName: CPUUtilization
+            Dimensions:
+            - Name: ClusterName
+              Value: !Ref Cluster
+            - Name: ServiceName
+              Value: !GetAtt Service.Name
+            Statistic: Maximum
+            Period: '60'
+            EvaluationPeriods: '3'
+            Threshold: '90'
+            ComparisonOperator: GreaterThanThreshold
+            AlarmActions:
+            - !Ref ServiceScaleOutPolicy
+
+    CPUScaleInAlarm:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+            AlarmName: CPU utilization less than 70%
+            AlarmDescription: Alarm if cpu utilization greater than 70% of reserved cpu
+            Namespace: AWS/ECS
+            MetricName: CPUUtilization
+            Dimensions:
+            - Name: ClusterName
+              Value: !Ref Cluster
+            - Name: ServiceName
+              Value: !GetAtt Service.Name
+            Statistic: Maximum
+            Period: '60'
+            EvaluationPeriods: '10'
+            Threshold: '70'
+            ComparisonOperator: LessThanThreshold
+            AlarmActions:
+            - !Ref ServiceScaleInPolicy
