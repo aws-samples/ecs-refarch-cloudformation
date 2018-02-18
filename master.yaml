@@ -1,18 +1,24 @@
 Description: >
 
-    This template deploys a VPC, with a pair of public and private subnets spread 
-    across two Availabilty Zones. It deploys an Internet Gateway, with a default 
-    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
+    This template deploys a VPC, with a pair of public and private subnets spread
+    across two Availabilty Zones. It deploys an Internet Gateway, with a default
+    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),
     and default routes for them in the private subnets.
 
-    It then deploys a highly available ECS cluster using an AutoScaling Group, with 
-    ECS hosts distributed across multiple Availability Zones. 
+    It then deploys a highly available ECS cluster using an AutoScaling Group, with
+    ECS hosts distributed across multiple Availability Zones.
 
-    Finally, it deploys a pair of example ECS services from containers published in 
+    Finally, it deploys a pair of example ECS services from containers published in
     Amazon EC2 Container Registry (Amazon ECR).
 
     Last Modified: 22nd September 2016
     Author: Paul Maddox <pmaddox@amazon.com>
+
+Parameters:
+    ALBCidrIp:
+        Description: Limit requests to the ALB from here
+        Type: String
+        Default: 0.0.0.0/0
 
 Resources:
 
@@ -32,9 +38,12 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/security-groups.yaml
-            Parameters: 
+            Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
+                ALBCidrIp:          !Ref ALBCidrIp
+                NatGateway1EIP:     !GetAtt VPC.Outputs.NatGateway1EIP
+                NatGateway2EIP:     !GetAtt VPC.Outputs.NatGateway2EIP
 
     ALB:
         Type: AWS::CloudFormation::Stack
@@ -66,7 +75,7 @@ Resources:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 DesiredCount: 2
-                Listener: !GetAtt ALB.Outputs.Listener 
+                Listener: !GetAtt ALB.Outputs.Listener
                 Path: /products
 
     WebsiteService:
@@ -78,16 +87,16 @@ Resources:
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 DesiredCount: 2
                 ProductServiceUrl: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
-                Listener: !GetAtt ALB.Outputs.Listener 
+                Listener: !GetAtt ALB.Outputs.Listener
                 Path: /
 
 
 Outputs:
 
-    ProductServiceUrl: 
+    ProductServiceUrl:
         Description: The URL endpoint for the product service
         Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
 
-    WebsiteServiceUrl: 
+    WebsiteServiceUrl:
         Description: The URL endpoint for the website service
         Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]

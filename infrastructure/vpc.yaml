@@ -1,7 +1,7 @@
 Description: >
-    This template deploys a VPC, with a pair of public and private subnets spread 
-    across two Availabilty Zones. It deploys an Internet Gateway, with a default 
-    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
+    This template deploys a VPC, with a pair of public and private subnets spread
+    across two Availabilty Zones. It deploys an Internet Gateway, with a default
+    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),
     and default routes for them in the private subnets.
 
 Parameters:
@@ -10,7 +10,7 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
-    VpcCIDR: 
+    VpcCIDR:
         Description: Please enter the IP range (CIDR notation) for this VPC
         Type: String
         Default: 10.192.0.0/16
@@ -37,75 +37,75 @@ Parameters:
 
 Resources:
 
-    VPC: 
+    VPC:
         Type: AWS::EC2::VPC
         Properties:
             CidrBlock: !Ref VpcCIDR
-            Tags: 
-                - Key: Name 
+            Tags:
+                - Key: Name
                   Value: !Ref EnvironmentName
-            
+
     InternetGateway:
         Type: AWS::EC2::InternetGateway
         Properties:
             Tags:
                 - Key: Name
                   Value: !Ref EnvironmentName
-            
+
     InternetGatewayAttachment:
         Type: AWS::EC2::VPCGatewayAttachment
         Properties:
             InternetGatewayId: !Ref InternetGateway
             VpcId: !Ref VPC
 
-    PublicSubnet1: 
+    PublicSubnet1:
         Type: AWS::EC2::Subnet
         Properties:
             VpcId: !Ref VPC
             AvailabilityZone: !Select [ 0, !GetAZs ]
             CidrBlock: !Ref PublicSubnet1CIDR
             MapPublicIpOnLaunch: true
-            Tags: 
-                - Key: Name 
+            Tags:
+                - Key: Name
                   Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
 
-    PublicSubnet2: 
+    PublicSubnet2:
         Type: AWS::EC2::Subnet
         Properties:
             VpcId: !Ref VPC
             AvailabilityZone: !Select [ 1, !GetAZs ]
             CidrBlock: !Ref PublicSubnet2CIDR
             MapPublicIpOnLaunch: true
-            Tags: 
-                - Key: Name 
+            Tags:
+                - Key: Name
                   Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
 
-    PrivateSubnet1: 
+    PrivateSubnet1:
         Type: AWS::EC2::Subnet
         Properties:
             VpcId: !Ref VPC
             AvailabilityZone: !Select [ 0, !GetAZs ]
             CidrBlock: !Ref PrivateSubnet1CIDR
             MapPublicIpOnLaunch: false
-            Tags: 
-                - Key: Name 
+            Tags:
+                - Key: Name
                   Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
 
-    PrivateSubnet2: 
+    PrivateSubnet2:
         Type: AWS::EC2::Subnet
         Properties:
             VpcId: !Ref VPC
             AvailabilityZone: !Select [ 1, !GetAZs ]
             CidrBlock: !Ref PrivateSubnet2CIDR
             MapPublicIpOnLaunch: false
-            Tags: 
-                - Key: Name 
+            Tags:
+                - Key: Name
                   Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
 
     NatGateway1EIP:
         Type: AWS::EC2::EIP
         DependsOn: InternetGatewayAttachment
-        Properties: 
+        Properties:
             Domain: vpc
 
     NatGateway2EIP:
@@ -114,13 +114,13 @@ Resources:
         Properties:
             Domain: vpc
 
-    NatGateway1: 
+    NatGateway1:
         Type: AWS::EC2::NatGateway
-        Properties: 
+        Properties:
             AllocationId: !GetAtt NatGateway1EIP.AllocationId
             SubnetId: !Ref PublicSubnet1
 
-    NatGateway2: 
+    NatGateway2:
         Type: AWS::EC2::NatGateway
         Properties:
             AllocationId: !GetAtt NatGateway2EIP.AllocationId
@@ -128,16 +128,16 @@ Resources:
 
     PublicRouteTable:
         Type: AWS::EC2::RouteTable
-        Properties: 
+        Properties:
             VpcId: !Ref VPC
-            Tags: 
-                - Key: Name 
+            Tags:
+                - Key: Name
                   Value: !Sub ${EnvironmentName} Public Routes
 
-    DefaultPublicRoute: 
+    DefaultPublicRoute:
         Type: AWS::EC2::Route
         DependsOn: InternetGatewayAttachment
-        Properties: 
+        Properties:
             RouteTableId: !Ref PublicRouteTable
             DestinationCidrBlock: 0.0.0.0/0
             GatewayId: !Ref InternetGateway
@@ -153,14 +153,14 @@ Resources:
         Properties:
             RouteTableId: !Ref PublicRouteTable
             SubnetId: !Ref PublicSubnet2
-    
+
 
     PrivateRouteTable1:
         Type: AWS::EC2::RouteTable
-        Properties: 
+        Properties:
             VpcId: !Ref VPC
-            Tags: 
-                - Key: Name 
+            Tags:
+                - Key: Name
                   Value: !Sub ${EnvironmentName} Private Routes (AZ1)
 
     DefaultPrivateRoute1:
@@ -178,10 +178,10 @@ Resources:
 
     PrivateRouteTable2:
         Type: AWS::EC2::RouteTable
-        Properties: 
+        Properties:
             VpcId: !Ref VPC
-            Tags: 
-                - Key: Name 
+            Tags:
+                - Key: Name
                   Value: !Sub ${EnvironmentName} Private Routes (AZ2)
 
     DefaultPrivateRoute2:
@@ -197,9 +197,9 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
-Outputs: 
+Outputs:
 
-    VPC: 
+    VPC:
         Description: A reference to the created VPC
         Value: !Ref VPC
 
@@ -215,7 +215,7 @@ Outputs:
         Description: A reference to the public subnet in the 1st Availability Zone
         Value: !Ref PublicSubnet1
 
-    PublicSubnet2: 
+    PublicSubnet2:
         Description: A reference to the public subnet in the 2nd Availability Zone
         Value: !Ref PublicSubnet2
 
@@ -223,6 +223,14 @@ Outputs:
         Description: A reference to the private subnet in the 1st Availability Zone
         Value: !Ref PrivateSubnet1
 
-    PrivateSubnet2: 
+    PrivateSubnet2:
         Description: A reference to the private subnet in the 2nd Availability Zone
         Value: !Ref PrivateSubnet2
+
+    NatGateway1EIP:
+        Description: EIP of NatGateway1
+        Value: !Ref NatGateway1EIP
+
+    NatGateway2EIP:
+        Description: EIP of NatGateway2
+        Value: !Ref NatGateway2EIP
