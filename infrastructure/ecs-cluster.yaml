@@ -122,9 +122,10 @@ Resources:
                 "Fn::Base64": !Sub |
                     #!/bin/bash
                     yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-                    yum install -y aws-cfn-bootstrap
+                    yum install -y aws-cfn-bootstrap hibagent
                     /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
                     /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
+                    /usr/bin/enable-ec2-spot-hibernation
 
         Metadata:
             AWS::CloudFormation::Init:
