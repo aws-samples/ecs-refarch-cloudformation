@@ -1,0 +1,181 @@
+Parameters:
+  Cluster:
+    Type: String
+    Description: Name of ECS Cluster
+  ECSAutoScalingGroupName:
+    Type: String
+    Description: Name of Auto Scaling Group
+Resources:
+  NotificationTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      Subscription:
+        - Endpoint: !GetAtt 
+            - LifecycleHandlerFunction
+            - Arn
+          Protocol: lambda
+    DependsOn: LifecycleHandlerFunction
+  InstanceTerminatingHook:
+    Type: 'AWS::AutoScaling::LifecycleHook'
+    Properties:
+      AutoScalingGroupName: !Ref ECSAutoScalingGroupName
+      DefaultResult: ABANDON
+      HeartbeatTimeout: '900'
+      LifecycleTransition: 'autoscaling:EC2_INSTANCE_TERMINATING'
+      NotificationTargetARN: !Ref NotificationTopic
+      RoleARN: !GetAtt 
+        - AutoscalingNotificationRole
+        - Arn
+    DependsOn: NotificationTopic
+  AutoscalingNotificationRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - autoscaling.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AutoScalingNotificationAccessRole'
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Policies:
+        - PolicyName: lambda-inline
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'autoscaling:CompleteLifecycleAction'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'ec2:DescribeInstances'
+                  - 'ec2:DescribeInstanceAttribute'
+                  - 'ec2:DescribeInstanceStatus'
+                  - 'ec2:DescribeHosts'
+                  - 'ecs:ListContainerInstances'
+                  - 'ecs:SubmitContainerStateChange'
+                  - 'ecs:SubmitTaskStateChange'
+                  - 'ecs:DescribeContainerInstances'
+                  - 'ecs:UpdateContainerInstancesState'
+                  - 'ecs:ListTasks'
+                  - 'ecs:DescribeTasks'
+                  - 'sns:Publish'
+                  - 'sns:ListSubscriptions'
+                Resource: '*'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AutoScalingNotificationAccessRole'
+  LambdaInvokePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref LifecycleHandlerFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref NotificationTopic
+  LifecycleHandlerFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code:
+        ZipFile: !Join 
+          - ''
+          - - |
+              import boto3,json,time
+            - |
+              ec2Client = boto3.client('ec2')
+            - |
+              ecsClient = boto3.client('ecs')
+            - |
+              autoscalingClient = boto3.client('autoscaling')
+            - |
+              snsClient = boto3.client('sns')
+            - |
+              lambdaClient = boto3.client('lambda')
+            - |
+              def publishSNSMessage(snsMessage,snsTopicArn):
+            - |2
+                  response = snsClient.publish(TopicArn=snsTopicArn,Message=json.dumps(snsMessage),Subject='reinvoking')
+            - >
+              def
+              setContainerInstanceStatusToDraining(ecsClusterName,containerInstanceArn):
+            - |2
+                  response = ecsClient.update_container_instances_state(cluster=ecsClusterName,containerInstances=[containerInstanceArn],status='DRAINING')
+            - |
+              def tasksRunning(ecsClusterName,ec2InstanceId):
+            - |2
+                  ecsContainerInstances = ecsClient.describe_container_instances(cluster=ecsClusterName,containerInstances=ecsClient.list_container_instances(cluster=ecsClusterName)['containerInstanceArns'])['containerInstances']
+            - |2
+                  for i in ecsContainerInstances:
+            - |2
+                      if i['ec2InstanceId'] == ec2InstanceId:
+            - |2
+                          if i['status'] == 'ACTIVE':
+            - |2
+                              setContainerInstanceStatusToDraining(ecsClusterName,i['containerInstanceArn'])
+            - |2
+                              return 1
+            - |2
+                          if (i['runningTasksCount']>0) or (i['pendingTasksCount']>0):
+            - |2
+                              return 1
+            - |2
+                          return 0
+            - |2
+                  return 2
+            - |
+              def lambda_handler(event, context):
+            - '    ecsClusterName ='''
+            - !Ref Cluster
+            - |
+              '
+            - |2
+                  snsTopicArn = event['Records'][0]['Sns']['TopicArn']
+            - |2
+                  snsMessage = json.loads(event['Records'][0]['Sns']['Message'])
+            - |2
+                  lifecycleHookName=snsMessage['LifecycleHookName']
+            - |2
+                  lifecycleActionToken=snsMessage['LifecycleActionToken']
+            - |2
+                  asgName=snsMessage['AutoScalingGroupName']
+            - |2
+                  ec2InstanceId = snsMessage['EC2InstanceId']
+            - |2
+                  checkTasks = tasksRunning(ecsClusterName,ec2InstanceId)
+            - |2
+                  if checkTasks==0:
+            - |2
+                      try:
+            - |2
+                          response = autoscalingClient.complete_lifecycle_action(LifecycleHookName=lifecycleHookName,AutoScalingGroupName=asgName,LifecycleActionToken=lifecycleActionToken,LifecycleActionResult='CONTINUE')
+            - |2
+                      except BaseException as e:
+            - |2
+                          print(str(e))
+            - |2
+                  elif checkTasks==1:
+            - |2
+                      time.sleep(5)
+            - |2
+                      publishSNSMessage(snsMessage,snsTopicArn)
+      Handler: index.lambda_handler
+      Role: !GetAtt 
+        - LambdaExecutionRole
+        - Arn
+      Runtime: python3.6
+      Timeout: 10
+
