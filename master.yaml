@@ -85,7 +85,7 @@ Resources:
     LifecycleHook:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/ecs-dev-bucket/infrastructure/ecs-cluster.yaml
+            TemplateURL: https://s3.amazonaws.com/ecs-dev-bucket/infrastructure/lifecyclehook.yaml
             Parameters:
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
