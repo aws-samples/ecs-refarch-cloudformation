@@ -1,3 +1,5 @@
+Description: >
+    This template deploys a Lambda Function and Auto Scaling Lifecycle Hook to drain Tasks from your Container Instances when an Instance is selected for Termination in your Auto Scaling Group.
 Parameters:
   Cluster:
     Type: String
