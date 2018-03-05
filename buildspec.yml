@@ -12,11 +12,12 @@ phases:
     commands:
 
       # Validate all of the CloudFormation templates
+      - chmod a+x ./tests/validate-templates.sh
       - ./tests/validate-templates.sh
 
   build:
     commands:
 
       # Sync the templates
-      # - aws s3 sync . s3://ecs-refarch-cloudformation
+      # - aws s3 sync . s3://${S3_BUCKET}
 
