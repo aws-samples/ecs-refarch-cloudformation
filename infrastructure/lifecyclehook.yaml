@@ -92,11 +92,14 @@ Resources:
   LifecycleHandlerFunction:
     Type: 'AWS::Lambda::Function'
     Properties:
+      Environment:
+        Variables:
+          CLUSTER: !ref Cluster
       Code:
         ZipFile: !Join 
           - ''
           - - |
-              import boto3,json,time
+              import boto3,json,os,time
               ec2Client = boto3.client('ec2')
               ecsClient = boto3.client('ecs')
               autoscalingClient = boto3.client('autoscaling')
@@ -118,17 +121,14 @@ Resources:
                           return 0
                   return 2
               def lambda_handler(event, context):
-            - '    ecsClusterName ='''
-            - !Ref Cluster
-            - |
-              '
-                  snsTopicArn = event['Records'][0]['Sns']['TopicArn']
-                  snsMessage = json.loads(event['Records'][0]['Sns']['Message'])
+                  ecsClusterName=os.environ['CLUSTER']
+                  snsTopicArn=event['Records'][0]['Sns']['TopicArn']
+                  snsMessage=json.loads(event['Records'][0]['Sns']['Message'])
                   lifecycleHookName=snsMessage['LifecycleHookName']
                   lifecycleActionToken=snsMessage['LifecycleActionToken']
                   asgName=snsMessage['AutoScalingGroupName']
-                  ec2InstanceId = snsMessage['EC2InstanceId']
-                  checkTasks = tasksRunning(ecsClusterName,ec2InstanceId)
+                  ec2InstanceId=snsMessage['EC2InstanceId']
+                  checkTasks=tasksRunning(ecsClusterName,ec2InstanceId)
                   if checkTasks==0:
                       try:
                           response = autoscalingClient.complete_lifecycle_action(LifecycleHookName=lifecycleHookName,AutoScalingGroupName=asgName,LifecycleActionToken=lifecycleActionToken,LifecycleActionResult='CONTINUE')
