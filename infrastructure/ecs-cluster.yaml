@@ -339,4 +339,8 @@ Outputs:
 
     ECSServiceAutoScalingRole:
         Description: A reference to ECS service auto scaling role
-        Value: !Ref ECSServiceAutoScalingRole
+        Value: !GetAtt ECSServiceAutoScalingRole.Arn
+
+    ECSAutoScalingGroupName:
+        Description: A reference to ECS AutoScaling Group Name
+        Value: !Ref ECSAutoScalingGroup

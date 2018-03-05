@@ -80,8 +80,15 @@ Resources:
                 ProductServiceUrl: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
                 Listener: !GetAtt ALB.Outputs.Listener 
                 Path: /
-                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole.Arn
+                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
 
+    LifecycleHook:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/ecs-refarch-cloudformation/infrastructure/lifecyclehook.yaml
+            Parameters:
+                Cluster: !GetAtt ECS.Outputs.Cluster
+                ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
 
 Outputs:
 
