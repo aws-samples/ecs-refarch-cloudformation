@@ -12,7 +12,7 @@ phases:
     commands:
 
       # Validate all of the CloudFormation templates
-      - export ERROR_COUNT=0; for TEMPLATE in $(find . | grep yaml); do ERRORS=$(aws cloudformation validate-template --template-body file://$TEMPLATE 2>&1 >/dev/null); if [ "$?" -gt "0" ]; then echo "$TEMPLATE: $ERRORS"; ((ERROR_COUNT++)); fi; done; echo "$ERROR_COUNT template validation error(s) found"; if [ "$ERROR_COUNT" -gt 0 ]; then exit 1; fi
+      - ./tests/validate-templates.sh
 
   build:
     commands:
