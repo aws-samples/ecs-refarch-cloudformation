@@ -94,7 +94,7 @@ Resources:
     Properties:
       Environment:
         Variables:
-          CLUSTER: !ref Cluster
+          CLUSTER: !Ref Cluster
       Code:
         ZipFile: !Join 
           - ''
