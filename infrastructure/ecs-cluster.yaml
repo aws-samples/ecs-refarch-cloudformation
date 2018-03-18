@@ -52,6 +52,8 @@ Mappings:
             AMI: ami-92e06fea
         us-west-1:
             AMI: ami-9ad4dcfa
+        us-gov-west-1:
+            AMI: ami-cc3cb7ad
         eu-west-3:
             AMI: ami-698b3d14
         eu-west-2:
