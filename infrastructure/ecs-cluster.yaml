@@ -30,51 +30,11 @@ Parameters:
         Description: Select the Security Group to use for the ECS cluster hosts
         Type: AWS::EC2::SecurityGroup::Id
 
-Mappings:
-
-    # These are the latest ECS optimized AMIs as of Feb 2018:
-    #
-    #   amzn-ami-2017.09.h-amazon-ecs-optimized
-    #   ECS agent:    1.17.1
-    #   Docker:       17.09.1-ce
-    #   ecs-init:     1.17.1-1
-    #
-    # You can find the latest available on this page of our documentation:
-    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
-    # (note the AMI identifier is region specific)
-
-    AWSRegionToAMI:
-        us-east-2:
-            AMI: ami-b86a5ddd
-        us-east-1:
-            AMI: ami-a7a242da
-        us-west-2:
-            AMI: ami-92e06fea
-        us-west-1:
-            AMI: ami-9ad4dcfa
-        eu-west-3:
-            AMI: ami-698b3d14
-        eu-west-2:
-            AMI: ami-f4e20693
-        eu-west-1:
-            AMI: ami-0693ed7f
-        eu-central-1:
-            AMI: ami-0799fa68
-        ap-northeast-2:
-            AMI: ami-a5dd70cb
-        ap-northeast-1:
-            AMI: ami-68ef940e
-        ap-southeast-2:
-            AMI: ami-ee884f8c
-        ap-southeast-1:
-            AMI: ami-0a622c76
-        ca-central-1:
-            AMI: ami-5ac94e3e
-        ap-south-1:
-            AMI: ami-2e461a41
-        sa-east-1:
-            AMI: ami-d44008b8	
-
+    ECSAMI:
+        Description: AMI ID
+        Type: AWS::SSM::Parameter::Value<String>
+        Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+        
 Resources:
 
     ECSCluster:
@@ -113,7 +73,7 @@ Resources:
     ECSLaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties:
-            ImageId:  !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
+            ImageId: !Ref ECSAMI
             InstanceType: !Ref InstanceType
             SecurityGroups:
                 - !Ref SecurityGroup
