@@ -32,48 +32,48 @@ Parameters:
 
 Mappings:
 
-  # These are the latest ECS optimized AMIs as of Jul 2018:
-  #
-  #  amzn-ami-2018.03.a-amazon-ecs-optimized
-  #  ECS agent:  1.18.0
-  #  Docker:    17.12.1-ce
-  #  ecs-init:   1.18.0-1
-  #
-  # You can find the latest available on this page of our documentation:
-  # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
-  # (note the AMI identifier is region specific)
+   # These are the latest ECS optimized AMIs as of Jul 2018:
+   #
+   #  amzn-ami-2018.03.a-amazon-ecs-optimized
+   #  ECS agent:  1.18.0
+   #  Docker:     17.12.1-ce
+   #  ecs-init:   1.18.0-1
+   #
+   # You can find the latest available on this page of our documentation:
+   # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
+   # (note the AMI identifier is region specific)
 
-  AWSRegionToAMI:
-    us-east-2:
-      AMI: ami-956e52f0
-    us-east-1:
-      AMI: ami-5253c32d
-    us-west-2:
-      AMI: ami-d2f489aa
-    us-west-1:
-      AMI: ami-6b81980b
-    eu-west-3:
-      AMI: ami-ca75c4b7
-    eu-west-2:
-      AMI: ami-3622cf51
-    eu-west-1:
-      AMI: ami-c91624b0
-    eu-central-1:
-      AMI: ami-10e6c8fb
-    ap-northeast-2:
-      AMI: ami-7c69c112
-    ap-northeast-1:
-      AMI: ami-f3f8098c
-    ap-southeast-2:
-      AMI: ami-bc04d5de
-    ap-southeast-1:
-      AMI: ami-b75a6acb
-    ca-central-1:
-      AMI: ami-da6cecbe
-    ap-south-1:
-      AMI: ami-c7072aa8
-    sa-east-1:
-      AMI: ami-a1e2becd
+    AWSRegionToAMI:
+        us-east-2:
+            AMI: ami-956e52f0
+        us-east-1:
+            AMI: ami-5253c32d
+        us-west-2:
+            AMI: ami-d2f489aa
+        us-west-1:
+            AMI: ami-6b81980b
+        eu-west-3:
+            AMI: ami-ca75c4b7
+        eu-west-2:
+            AMI: ami-3622cf51
+        eu-west-1:
+            AMI: ami-c91624b0
+        eu-central-1:
+            AMI: ami-10e6c8fb
+        ap-northeast-2:
+            AMI: ami-7c69c112
+        ap-northeast-1:
+            AMI: ami-f3f8098c
+        ap-southeast-2:
+            AMI: ami-bc04d5de
+        ap-southeast-1:
+            AMI: ami-b75a6acb
+        ca-central-1:
+            AMI: ami-da6cecbe
+        ap-south-1:
+            AMI: ami-c7072aa8
+        sa-east-1:
+            AMI: ami-a1e2becd
 
 Resources:
 
