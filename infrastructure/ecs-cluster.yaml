@@ -83,6 +83,7 @@ Resources:
             ClusterName: !Ref EnvironmentName
 
     ECSAutoScalingGroup:
+        DependsOn: ECSCluster
         Type: AWS::AutoScaling::AutoScalingGroup
         Properties:
             VPCZoneIdentifier: !Ref Subnets
