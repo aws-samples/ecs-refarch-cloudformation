@@ -34,10 +34,10 @@ Mappings:
 
     # These are the latest ECS optimized AMIs as of Feb 2018:
     #
-    #   amzn-ami-2017.09.h-amazon-ecs-optimized
-    #   ECS agent:    1.17.1
-    #   Docker:       17.09.1-ce
-    #   ecs-init:     1.17.1-1
+    #   amzn-ami-2018.03.e-amazon-ecs-optimized
+    #   ECS agent:    1.20.1
+    #   Docker:       18.03.1-ce
+    #   ecs-init:     1.20.1-1
     #
     # You can find the latest available on this page of our documentation:
     # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
@@ -45,35 +45,37 @@ Mappings:
 
     AWSRegionToAMI:
         us-east-2:
-            AMI: ami-b86a5ddd
+            AMI: ami-028a9de0a7e353ed9
         us-east-1:
-            AMI: ami-a7a242da
+            AMI: ami-00129b193dc81bc31
         us-west-2:
-            AMI: ami-92e06fea
+            AMI: ami-00d4f478
         us-west-1:
-            AMI: ami-9ad4dcfa
+            AMI: ami-0d438d09af26c9583
         eu-west-3:
-            AMI: ami-698b3d14
+            AMI: ami-07da674f0655ef4e1
         eu-west-2:
-            AMI: ami-f4e20693
+            AMI: ami-a44db8c3
         eu-west-1:
-            AMI: ami-0693ed7f
+            AMI: ami-0af844a965e5738db
         eu-central-1:
-            AMI: ami-0799fa68
+            AMI: ami-0291ba887ba0d515f
         ap-northeast-2:
-            AMI: ami-a5dd70cb
+            AMI: ami-047d2a61f94f862dc
         ap-northeast-1:
-            AMI: ami-68ef940e
+            AMI: ami-0041c416aa23033a2
         ap-southeast-2:
-            AMI: ami-ee884f8c
+            AMI: ami-0092e55c70015d8c3
         ap-southeast-1:
-            AMI: ami-0a622c76
+            AMI: ami-091bf462afdb02c60
         ca-central-1:
-            AMI: ami-5ac94e3e
+            AMI: ami-192fa27d
         ap-south-1:
-            AMI: ami-2e461a41
+            AMI: ami-0c179ca015d301829
         sa-east-1:
-            AMI: ami-d44008b8	
+            AMI: ami-0018ff8ee48970ac3
+        us-gov-west-1:
+            AMI: ami-c6079ba7
 
 Resources:
 
