@@ -32,12 +32,12 @@ Parameters:
 
 Mappings:
 
-    # These are the latest ECS optimized AMIs as of Feb 2018:
+    # These are the latest ECS optimized AMIs as of Nov 2018:
     #
-    #   amzn-ami-2017.09.h-amazon-ecs-optimized
-    #   ECS agent:    1.17.1
-    #   Docker:       17.09.1-ce
-    #   ecs-init:     1.17.1-1
+    #   amzn-ami-2018.03.h-amazon-ecs-optimized
+    #   ECS agent:    1.21.0
+    #   Docker:       18.06.1-ce
+    #   ecs-init:     1.21.0-1
     #
     # You can find the latest available on this page of our documentation:
     # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
@@ -45,35 +45,35 @@ Mappings:
 
     AWSRegionToAMI:
         us-east-2:
-            AMI: ami-b86a5ddd
+            AMI: ami-0a0c6574ce16ce87a
         us-east-1:
-            AMI: ami-a7a242da
+            AMI: ami-07eb698ce660402d2
         us-west-2:
-            AMI: ami-92e06fea
+            AMI: ami-09568291a9d6c804c
         us-west-1:
-            AMI: ami-9ad4dcfa
+            AMI: ami-04c22ba97a0c063c4
         eu-west-3:
-            AMI: ami-698b3d14
+            AMI: ami-0a0948de946510ec0
         eu-west-2:
-            AMI: ami-f4e20693
+            AMI: ami-0cb31bf24b130a0f9
         eu-west-1:
-            AMI: ami-0693ed7f
+            AMI: ami-066826c6a40879d75
         eu-central-1:
-            AMI: ami-0799fa68
+            AMI: ami-0b9fee3a2d0596ed1
         ap-northeast-2:
-            AMI: ami-a5dd70cb
+            AMI: ami-0b52e57bed048ca48
         ap-northeast-1:
-            AMI: ami-68ef940e
+            AMI: ami-0edf19001c48838c7
         ap-southeast-2:
-            AMI: ami-ee884f8c
+            AMI: ami-08c26730c8ee004fa
         ap-southeast-1:
-            AMI: ami-0a622c76
+            AMI: ami-08d4fe232c67b81b8
         ca-central-1:
-            AMI: ami-5ac94e3e
+            AMI: ami-055750f063052ec55
         ap-south-1:
-            AMI: ami-2e461a41
+            AMI: ami-05f009513cd58ac90
         sa-east-1:
-            AMI: ami-d44008b8	
+            AMI: ami-0ada25501ac1375b3
 
 Resources:
 
