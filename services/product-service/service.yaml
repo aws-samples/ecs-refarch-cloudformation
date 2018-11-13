@@ -54,7 +54,7 @@ Resources:
                   LogConfiguration:
                     LogDriver: awslogs
                     Options:
-                        awslogs-group: !Ref AWS::StackName
+                        awslogs-group: !Ref CloudWatchLogsGroup
                         awslogs-region: !Ref AWS::Region
     
     CloudWatchLogsGroup:
