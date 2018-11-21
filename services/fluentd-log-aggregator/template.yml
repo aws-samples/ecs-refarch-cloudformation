@@ -1,0 +1,282 @@
+Description: >
+    This template deploys a Fluentd Log Aggregator on Fargate with autoscaling behind a Network Load Balancer. Partly based on: https://github.com/aws-samples/aws-code-snippets/blob/master/CloudFormation/ECS.md
+Parameters:
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    DockerImage:
+        Description: Your Fluentd Docker image. # Instructions on building a Fluentd image: https://hub.docker.com/r/fluent/fluentd/
+        Type: String
+
+    VPC:
+        Type: AWS::EC2::VPC::Id
+        Description: Choose which VPC the Network Load Balancer and Fargate Service should be deployed to
+
+    Subnets:
+        Description: Choose the subnets for the Network Load Balancer and Fargate service; it is recommended that these are private subnets behind a NAT Gateway.
+        Type: List<AWS::EC2::Subnet::Id>
+
+    Cluster:
+        Description: Please provide the ECS Cluster name that this service should run on
+        Type: String
+
+    ExecutionRoleArn:
+        Description: Execution role for the Fargate Service
+        Type: String
+
+    DesiredCount:
+        Description: How many instances of this task should we run across our cluster?
+        Type: Number
+        Default: 1
+
+    MinTasks:
+        Description: The minimum number of tasks for the Fluentd Log Aggregator service. This many tasks should be able to handle your average/typical log traffic.
+        Type: String
+
+    MaxTasks:
+        Description: The maximum number of tasks for the Fluentd Log Aggregator service. The aggregator can autoscale up to this limit when load increases.
+        Type: String
+
+Resources:
+    SecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+          GroupName: !Ref EnvironmentName
+          GroupDescription: Allows ingress on 24224 for the fluentd aggregator
+          SecurityGroupIngress:
+              - IpProtocol: "tcp"
+                FromPort: 24224
+                ToPort: 24224
+                CidrIp: "0.0.0.0/0"
+          VpcId: !Ref VPC
+
+    Service:
+        Type: AWS::ECS::Service
+        DependsOn: Listener
+        Properties:
+            Cluster: !Ref Cluster
+            # Role: !Ref ServiceRole
+            DesiredCount: !Ref DesiredCount
+            LaunchType: FARGATE
+            TaskDefinition: !Ref TaskDefinition
+            DeploymentConfiguration:
+                MaximumPercent: 200
+                MinimumHealthyPercent: 100
+            NetworkConfiguration:
+                AwsvpcConfiguration:
+                  SecurityGroups:
+                    - !Ref SecurityGroup
+                  Subnets: !Ref Subnets
+            LoadBalancers:
+                - ContainerName: fluentd-aggregator
+                  ContainerPort: 24224
+                  TargetGroupArn: !Ref TargetGroup
+
+    TaskDefinition:
+        Type: AWS::ECS::TaskDefinition
+        Properties:
+            Family: fluentd-aggregator
+            TaskRoleArn: !Ref TaskRole
+            ExecutionRoleArn: !Ref ExecutionRoleArn
+            NetworkMode: awsvpc
+            Cpu: 4096
+            Memory: 8192
+            ContainerDefinitions:
+                - Name: fluentd-aggregator
+                  Essential: true
+                  Image: !Ref DockerImage
+                  PortMappings:
+                    - ContainerPort: 24224
+                      HostPort: 24224
+                      Protocol: tcp
+                  LogConfiguration:
+                    LogDriver: awslogs
+                    Options:
+                        awslogs-group: !Ref AWS::StackName
+                        awslogs-region: !Ref AWS::Region
+                        awslogs-stream-prefix: !Ref EnvironmentName
+                  HealthCheck:
+                      Command:
+                        - CMD-SHELL
+                        - curl http://localhost:8888/healthcheck?json=%7B%22log%22%3A+%22health+check%22%7D || exit 1
+                      StartPeriod: 30
+
+    CloudWatchLogsGroup:
+        Type: AWS::Logs::LogGroup
+        Properties:
+            LogGroupName: !Ref AWS::StackName
+            RetentionInDays: 14
+
+    LoadBalancer:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        Properties:
+            Name: !Ref EnvironmentName
+            Type: network
+            Scheme: internal
+            Subnets: !Ref Subnets
+            Tags:
+                - Key: Name
+                  Value: !Ref EnvironmentName
+
+    TargetGroup:
+        Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        DependsOn: LoadBalancer
+        Properties:
+            VpcId: !Ref VPC
+            Port: 24224
+            Protocol: TCP
+            TargetType: ip
+
+    Listener:
+        Type: AWS::ElasticLoadBalancingV2::Listener
+        DependsOn: LoadBalancer
+        Properties:
+            DefaultActions:
+            - Type: forward
+              TargetGroupArn: !Ref TargetGroup
+            LoadBalancerArn: !Ref LoadBalancer
+            Port: 24224
+            Protocol: TCP
+
+    # This IAM Role grants the task access to firehose
+    TaskRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: !Sub ecs-task-${AWS::StackName}
+            Path: /
+            AssumeRolePolicyDocument: |
+                {
+                    "Statement": [{
+                        "Sid": "",
+                        "Effect": "Allow",
+                        "Principal": { "Service": [ "ecs-tasks.amazonaws.com" ]},
+                        "Action": "sts:AssumeRole"
+                    }]
+                }
+            Policies:
+                - PolicyName: !Sub ecs-task-${AWS::StackName}
+                  PolicyDocument:
+                    {
+                        "Version": "2012-10-17",
+                        "Statement": [{
+                                "Effect": "Allow",
+                                "Action": [
+                                    "firehose:PutRecord",
+                                    "firehose:PutRecordBatch"
+                                ],
+                                "Resource": "*"
+                        }]
+                    }
+    ApplicationAutoScalingRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service:
+                              - application-autoscaling.amazonaws.com
+                      Action:
+                          - sts:AssumeRole
+            Path: "/"
+            Policies:
+                - PolicyName: ECSAggregatorScalingRole
+                  PolicyDocument:
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - ecs:UpdateService
+                                - ecs:DescribeServices
+                                - application-autoscaling:*
+                                - cloudwatch:DescribeAlarms
+                                - cloudwatch:GetMetricStatistics
+                            Resource: "*"
+    AutoScalingTarget:
+        Type: AWS::ApplicationAutoScaling::ScalableTarget
+        DependsOn: Service
+        Properties:
+            MaxCapacity: !Ref MaxTasks
+            MinCapacity: !Ref MinTasks
+            ResourceId: !Join ['', [service/, !Ref 'Cluster', /, !GetAtt [Service, Name]]]
+            RoleARN:
+                Fn::GetAtt:
+                    - ApplicationAutoScalingRole
+                    - Arn
+            ScalableDimension: ecs:service:DesiredCount
+            ServiceNamespace: ecs
+
+    ScaleOutAutoScalingPolicy:
+        Type: AWS::ApplicationAutoScaling::ScalingPolicy
+        Properties:
+            PolicyName: AggregatorScaleOutPolicy
+            PolicyType: StepScaling
+            ScalingTargetId: !Ref AutoScalingTarget
+            ScalableDimension: ecs:service:DesiredCount
+            ServiceNamespace: ecs
+            StepScalingPolicyConfiguration:
+                AdjustmentType: ChangeInCapacity
+                Cooldown: 90
+                MetricAggregationType: Average
+                StepAdjustments:
+                    - MetricIntervalLowerBound: 0
+                      ScalingAdjustment: 1
+
+    ScaleInAutoScalingPolicy:
+        Type: AWS::ApplicationAutoScaling::ScalingPolicy
+        Properties:
+            PolicyName: AggregatorScaleInPolicy
+            PolicyType: StepScaling
+            ScalingTargetId: !Ref AutoScalingTarget
+            ScalableDimension: ecs:service:DesiredCount
+            ServiceNamespace: ecs
+            StepScalingPolicyConfiguration:
+                AdjustmentType: ChangeInCapacity
+                Cooldown: 300
+                MetricAggregationType: Average
+                StepAdjustments:
+                    - MetricIntervalUpperBound: 0
+                      ScalingAdjustment: -1
+
+    ScaleOutCPUAlarm:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+            AlarmDescription: Service CPU Utilization High
+            MetricName: CPUUtilization
+            Namespace: AWS/ECS
+            Statistic: Average
+            Period: '60'
+            EvaluationPeriods: '1'
+            Threshold: '50'
+            AlarmActions:
+                - !Ref ScaleOutAutoScalingPolicy
+            Dimensions:
+                - Name: ServiceName
+                  Value:
+                      Fn::GetAtt:
+                          - Service
+                          - Name
+                - Name: ClusterName
+                  Value: !Ref Cluster
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+    ScaleInCPUAlarm:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+            AlarmDescription: Service CPU Utilization Low
+            MetricName: CPUUtilization
+            Namespace: AWS/ECS
+            Statistic: Average
+            Period: '600'
+            EvaluationPeriods: '1'
+            Threshold: '35'
+            AlarmActions:
+                - !Ref ScaleInAutoScalingPolicy
+            Dimensions:
+                - Name: ServiceName
+                  Value:
+                      Fn::GetAtt:
+                          - Service
+                          - Name
+                - Name: ClusterName
+                  Value: !Ref Cluster
+            ComparisonOperator: LessThanThreshold
