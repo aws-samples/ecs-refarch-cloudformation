@@ -140,11 +140,11 @@ Resources:
                         "elasticloadbalancing:DeregisterTargets",
                         "elasticloadbalancing:DescribeTargetGroups",
                         "elasticloadbalancing:DescribeTargetHealth",
-                        "elasticloadbalancing:RegisterTargets",
+                        "elasticloadbalancing:RegisterTargets"
                       ],
-                    "Resource": "*",
-                  },
-                ],
+                    "Resource": "*"
+                  }
+                ]
             }
 
   ServiceScalableTarget:
