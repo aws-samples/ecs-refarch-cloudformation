@@ -4,7 +4,7 @@ TEMPLATE_URL=https://s3.amazonaws.com/zanui-cdp-infra/$(NAME)
 
 
 test:
-	@find templates -iname "*.template" | xargs -I{} -n1 -t aws cloudformation validate-template --template-body file://{}
+	tests/validate-templates.sh
 
 stack-deploy-source:
 	aws s3 cp --recursive --exclude "*" --include "master.yaml" --include "infrastructure/*" --include "services/*" --include "stacks/$(NAME).json" . s3://zanui-cdp-infra/$(NAME)
@@ -41,3 +41,9 @@ markdown-update-template-index:
 
 setup:
 	@port install jq
+
+#https://github.com/chainer/chainer-cfn/blob/master/Makefile
+
+# estimate-cost:
+# 	@aws cloudformation estimate-template-cost \
+# 		--template-body=file://$(cform) --output text --query 'Url'
