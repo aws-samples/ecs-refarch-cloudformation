@@ -61,37 +61,6 @@ The ECS instances should also appear in the Managed Instances section of the EC2
 
 ## How do I...?
 
-### Get started and deploy this into my AWS account
-
-You can launch this CloudFormation stack in your account:
-
-| AWS Region | Short name | | 
-| -- | -- | -- |
-| US East (Ohio) | us-east-2 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| US East (N. Virginia) | us-east-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| US GovCloud | us-gov-west-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.amazonaws-us-gov.com/cloudformation/home?region=us-gov-west-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| US West (Oregon) | us-west-2 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| US West (N. California) | us-west-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| Canada (Central) | ca-central-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ca-central-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| EU (Frankfurt) | eu-west-3 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-3#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| EU (London) | eu-west-2 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-2#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| EU (Ireland) | eu-west-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| EU (Frankfurt) | eu-central-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| Asia Pacific (Seoul) | ap-northeast-2 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| Asia Pacific (Tokyo) | ap-northeast-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| Asia Pacific (Sydney) | ap-southeast-2 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| Asia Pacific (Singapore) | ap-southeast-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| Asia Pacific (Mumbai) | ap-south-1 |  [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-| South America (São Paulo) | sa-east-1 |  [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=Production&templateURL=https://s3-ap-southeast-2.amazonaws.com/zanui-cdp-infra/master.yaml) |
-
-### Customize the templates
-
-1. [Fork](https://github.com/awslabs/ecs-refarch-cloudformation#fork-destination-box) this GitHub repository.
-2. Clone the forked GitHub repository to your local machine.
-3. Modify the templates.
-4. Upload them to an Amazon S3 bucket of your choice.
-5. Either create a new CloudFormation stack by deploying the master.yaml template, or update your existing stack with your version of the templates.
-
 ### Create a new ECS service
 
 1. Push your container to a registry somewhere (e.g., [Amazon ECR](https://aws.amazon.com/ecr/)).
