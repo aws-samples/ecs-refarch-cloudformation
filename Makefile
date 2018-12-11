@@ -24,7 +24,7 @@ ifndef NAME
 	$(error NAME is undefined)
 endif
 	@echo Update stack $(NAME)
-	aws cloudformation update-stack --region $(REGION) --stack-name $(NAME) --template-url $(TEMPLATE_URL)/master.yaml --capabilities CAPABILITY_NAMED_IAM --parameters $(TEMPLATE_URL)/stacks/$(NAME).json
+	aws cloudformation update-stack --region $(REGION) --stack-name $(NAME) --template-url $(TEMPLATE_URL)/master.yaml --capabilities CAPABILITY_NAMED_IAM --debug
 
 change-stack: stack-deploy-source
 ifndef NAME

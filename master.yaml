@@ -68,6 +68,17 @@ Resources:
         Listener: !GetAtt ALB.Outputs.Listener
         Path: /products
 
+  JenkinsService:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/zanui-cdp-infra/staging/services/jenkins-service/service.yaml
+      Parameters:
+        VPC: !GetAtt VPC.Outputs.VPC
+        Cluster: !GetAtt ECS.Outputs.Cluster
+        DesiredCount: 2
+        Listener: !GetAtt ALB.Outputs.Listener
+        Path: /jenkins        
+
   WebsiteService:
     Type: AWS::CloudFormation::Stack
     Properties:
