@@ -82,7 +82,7 @@ Resources:
           #!/bin/bash
           yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
           yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-          yum install -y aws-cfn-bootstrap hibagent 
+          yum install -y aws-cfn-bootstrap hibagent
           /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
           /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
           /usr/bin/enable-ec2-spot-hibernation
@@ -90,9 +90,6 @@ Resources:
     Metadata:
       AWS::CloudFormation::Init:
         config:
-          packages:
-            yum:
-              collectd: []
 
           commands:
             01_add_instance_to_cluster:
@@ -266,9 +263,6 @@ Resources:
               "InstanceType": "${!aws:InstanceType}"
             },
             "metrics_collected": {
-              "collectd": {
-                "metrics_aggregation_interval": 60
-              },
               "disk": {
                 "measurement": [
                   "used_percent"
