@@ -82,7 +82,7 @@ Resources:
           #!/bin/bash
           yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
           yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-          yum install -y aws-cfn-bootstrap hibagent 
+          yum install -y aws-cfn-bootstrap hibagent
           /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
           /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
           /usr/bin/enable-ec2-spot-hibernation
@@ -222,36 +222,36 @@ Resources:
                 "collect_list": [
                   {
                     "file_path": "/var/log/messages",
-                    "log_group_name": "${ECSCluster}-/var/log/messages",
+                    "log_group_name": "${ECSCluster}/var/log/messages",
                     "log_stream_name": "{instance_id}",
                     "timestamp_format": "%b %d %H:%M:%S"
                   },
                   {
                     "file_path": "/var/log/dmesg",
-                    "log_group_name": "${ECSCluster}-/var/log/dmesg",
+                    "log_group_name": "${ECSCluster}/var/log/dmesg",
                     "log_stream_name": "{instance_id}"
                   },
                   {
                     "file_path": "/var/log/docker",
-                    "log_group_name": "${ECSCluster}-/var/log/docker",
+                    "log_group_name": "${ECSCluster}/var/log/docker",
                     "log_stream_name": "{instance_id}",
                     "timestamp_format": "%Y-%m-%dT%H:%M:%S.%f"
                   },
                   {
                     "file_path": "/var/log/ecs/ecs-init.log",
-                    "log_group_name": "${ECSCluster}-/var/log/ecs/ecs-init.log",
+                    "log_group_name": "${ECSCluster}/var/log/ecs/ecs-init.log",
                     "log_stream_name": "{instance_id}",
                     "timestamp_format": "%Y-%m-%dT%H:%M:%SZ"
                   },
                   {
                     "file_path": "/var/log/ecs/ecs-agent.log.*",
-                    "log_group_name": "${ECSCluster}-/var/log/ecs/ecs-agent.log",
+                    "log_group_name": "${ECSCluster}/var/log/ecs/ecs-agent.log",
                     "log_stream_name": "{instance_id}",
                     "timestamp_format": "%Y-%m-%dT%H:%M:%SZ"
                   },
                   {
                     "file_path": "/var/log/ecs/audit.log",
-                    "log_group_name": "${ECSCluster}-/var/log/ecs/audit.log",
+                    "log_group_name": "${ECSCluster}/var/log/ecs/audit.log",
                     "log_stream_name": "{instance_id}",
                     "timestamp_format": "%Y-%m-%dT%H:%M:%SZ"
                   }
